@@ -24,7 +24,7 @@ require (
 	github.com/swaggo/swag v1.16.3
 	github.com/testcontainers/testcontainers-go v0.30.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0
+	golang.org/x/exp v0.0.0-20240409090435-93d18d7e34b8
 )
 
 require (
@@ -37,7 +37,7 @@ require (
 	cloud.google.com/go/storage v1.40.0 // indirect
 	cosmossdk.io/math v1.3.0 // indirect
 	dario.cat/mergo v1.0.0 // indirect
-	firebase.google.com/go/v4 v4.13.0 // indirect
+	firebase.google.com/go/v4 v4.14.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/DataDog/zstd v1.5.5 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
@@ -48,7 +48,7 @@ require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.13.0 // indirect
-	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
+	github.com/btcsuite/btcd/btcec/v2 v2.3.3 // indirect
 	github.com/bytedance/sonic v1.11.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
@@ -74,7 +74,7 @@ require (
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/dmarkham/enumer v1.5.9 // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
-	github.com/docker/docker v26.0.0+incompatible // indirect
+	github.com/docker/docker v26.0.1+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/ethereum/c-kzg-4844 v1.0.1 // indirect
@@ -127,7 +127,7 @@ require (
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.17.7 // indirect
+	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
@@ -156,11 +156,11 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.19.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.52.2 // indirect
+	github.com/prometheus/common v0.52.3 // indirect
 	github.com/prometheus/procfs v0.13.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
 	github.com/quic-go/quic-go v0.42.0 // indirect
-	github.com/refraction-networking/utls v1.6.3 // indirect
+	github.com/refraction-networking/utls v1.6.4 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/rs/zerolog v1.32.0 // indirect
