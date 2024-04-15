@@ -24,6 +24,14 @@ func mine(baseMiningRate float64, now *time.Time, usr *user, t0Ref, tMinus1Ref *
 
 			return updatedUser, false, IDT0Changed, 0, 0
 		}
+		if updatedUser.BalanceT1 > 0 || updatedUser.BalanceT2 > 0 {
+			updatedUser.BalanceTotalStandard, updatedUser.BalanceTotalPreStaking = 0, 0
+			updatedUser.BalanceT1 = 0
+			updatedUser.BalanceT2 = 0
+			updatedUser.BalanceLastUpdatedAt = now
+
+			return updatedUser, false, IDT0Changed, 0, 0
+		}
 
 		return nil, false, IDT0Changed, 0, 0
 	}
@@ -238,8 +246,6 @@ func updateT0AndTMinus1ReferralsForUserHasNeverMined(usr *user) (updatedUser *re
 func (u *user) isAbsoluteZero() bool {
 	return u.BalanceSolo == 0 &&
 		u.BalanceT0 == 0 &&
-		u.BalanceT1 == 0 &&
-		u.BalanceT2 == 0 &&
 		u.BalanceSoloPending-u.BalanceSoloPendingApplied == 0 &&
 		u.BalanceForT0 == 0 &&
 		u.BalanceForTMinus1 == 0
