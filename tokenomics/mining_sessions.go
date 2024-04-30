@@ -47,6 +47,7 @@ type (
 		model.IDTMinus1Field
 		model.PreStakingAllocationField
 		model.PreStakingBonusField
+		model.ExtraBonusStartedAtField
 	}
 )
 
@@ -83,11 +84,17 @@ func (r *repository) StartNewMiningSession( //nolint:funlen,gocognit // A lot of
 	if err != nil {
 		return err
 	}
+	prevKYCStepPassed := old[0].KYCStepPassed
 	if err = r.validateKYC(ctx, userID, old[0], skipKYCSteps); shouldRollback == nil && err != nil {
 		return err
 	}
 	if err = r.updateTMinus1(ctx, id, old[0].IDT0, old[0].IDTMinus1); err != nil {
 		return errors.Wrapf(err, "failed to updateTMinus1 for id:%v", id)
+	}
+	if old[0].KYCStepPassed >= users.QuizKYCStep && prevKYCStepPassed < users.QuizKYCStep {
+		if err := r.ClaimExtraBonus(ctx, &ExtraBonusSummary{UserID: userID}); err != nil && !errors.Is(err, ErrNotFound) {
+			return errors.Wrapf(err, "failed to ClaimExtraBonus for:%v", userID)
+		}
 	}
 	newMS, extension := r.newStartOrExtendMiningSession(&old[0].StartOrExtendMiningSession, now)
 	newMS.ID = id

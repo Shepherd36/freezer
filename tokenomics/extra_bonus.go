@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
-	extrabonusnotifier "github.com/ice-blockchain/freezer/extra-bonus-notifier"
 	"github.com/ice-blockchain/freezer/model"
 	messagebroker "github.com/ice-blockchain/wintr/connectors/message_broker"
 	"github.com/ice-blockchain/wintr/connectors/storage/v3"
@@ -21,12 +20,9 @@ import (
 
 type (
 	availableExtraBonus struct {
-		model.ExtraBonusLastClaimAvailableAtField
 		model.ExtraBonusStartedAtField
 		model.DeserializedUsersKey
 		model.ExtraBonusField
-		model.NewsSeenField
-		model.ExtraBonusDaysClaimNotAvailableResettableField
 	}
 )
 
@@ -39,91 +35,17 @@ func (r *repository) ClaimExtraBonus(ctx context.Context, ebs *ExtraBonusSummary
 		return errors.Wrapf(err, "failed to getOrInitInternalID for userID:%v", ebs.UserID)
 	}
 	now := time.Now()
-	stateForUpdate, err := r.detectAvailableExtraBonus(ctx, now, id)
-	if err != nil {
-		return errors.Wrapf(err, "failed to getAvailableExtraBonus for userID:%v", ebs.UserID)
+	if r.cfg.ExtraBonuses.KycPassedExtraBonus == 0 {
+		return ErrNotFound
+	}
+	stateForUpdate := &availableExtraBonus{
+		ExtraBonusStartedAtField: model.ExtraBonusStartedAtField{ExtraBonusStartedAt: now},
+		DeserializedUsersKey:     model.DeserializedUsersKey{ID: id},
+		ExtraBonusField:          model.ExtraBonusField{ExtraBonus: r.cfg.ExtraBonuses.KycPassedExtraBonus},
 	}
 	ebs.AvailableExtraBonus = stateForUpdate.ExtraBonus
 
 	return errors.Wrapf(storage.Set(ctx, r.db, stateForUpdate), "failed to claim extra bonus:%#v", stateForUpdate)
-}
-
-func (r *repository) detectAvailableExtraBonus(ctx context.Context, now *time.Time, id int64) (*availableExtraBonus, error) {
-	if ctx.Err() != nil {
-		return nil, errors.Wrap(ctx.Err(), "unexpected deadline")
-	}
-	usr, err := storage.Get[struct {
-		model.MiningSessionSoloStartedAtField
-		model.MiningSessionSoloEndedAtField
-		model.ExtraBonusLastClaimAvailableAtField
-		model.ExtraBonusStartedAtField
-		model.ExtraBonusDaysClaimNotAvailableResettableField
-		model.NewsSeenField
-		model.UTCOffsetField
-	}](ctx, r.db, model.SerializedUsersKey(id))
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get extra bonus state before claiming it for id:%v", id)
-	}
-	if len(usr) == 0 {
-		return nil, ErrNotFound
-	}
-
-	return r.getAvailableExtraBonus(now, id, usr[0].ExtraBonusStartedAtField, usr[0].ExtraBonusLastClaimAvailableAtField, usr[0].MiningSessionSoloStartedAtField, usr[0].MiningSessionSoloEndedAtField, usr[0].ExtraBonusDaysClaimNotAvailableResettableField, usr[0].UTCOffsetField, usr[0].NewsSeenField) //nolint:lll // .
-}
-
-//nolint:funlen,lll // .
-func (r *repository) getAvailableExtraBonus(
-	now *time.Time,
-	id int64,
-	extraBonusStartedAtField model.ExtraBonusStartedAtField,
-	extraBonusLastClaimAvailableAtField model.ExtraBonusLastClaimAvailableAtField,
-	miningSessionSoloStartedAtField model.MiningSessionSoloStartedAtField,
-	miningSessionSoloEndedAtField model.MiningSessionSoloEndedAtField,
-	extraBonusDaysClaimNotAvailableField model.ExtraBonusDaysClaimNotAvailableResettableField,
-	utcOffsetField model.UTCOffsetField,
-	newsSeenField model.NewsSeenField,
-) (*availableExtraBonus, error) {
-	var (
-		extraBonusIndex     uint16
-		extraBonus          float64
-		calculateExtraBonus = func() float64 {
-			return extrabonusnotifier.CalculateExtraBonus(newsSeenField.NewsSeen, extraBonusDaysClaimNotAvailableField.ExtraBonusDaysClaimNotAvailable, extraBonusIndex-1, now, extraBonusLastClaimAvailableAtField.ExtraBonusLastClaimAvailableAt, miningSessionSoloStartedAtField.MiningSessionSoloStartedAt, miningSessionSoloEndedAtField.MiningSessionSoloEndedAt) //nolint:lll // .
-		}
-	)
-	if !extraBonusStartedAtField.ExtraBonusStartedAt.IsNil() &&
-		now.After(*extraBonusLastClaimAvailableAtField.ExtraBonusLastClaimAvailableAt.Time) &&
-		extraBonusStartedAtField.ExtraBonusStartedAt.After(*extraBonusLastClaimAvailableAtField.ExtraBonusLastClaimAvailableAt.Time) &&
-		extraBonusStartedAtField.ExtraBonusStartedAt.Before(extraBonusLastClaimAvailableAtField.ExtraBonusLastClaimAvailableAt.Add(r.cfg.ExtraBonuses.ClaimWindow)) &&
-		now.Before(extraBonusLastClaimAvailableAtField.ExtraBonusLastClaimAvailableAt.Add(r.cfg.ExtraBonuses.ClaimWindow)) {
-		return nil, ErrDuplicate
-	}
-	if bonusAvailable, bonusClaimable := extrabonusnotifier.IsExtraBonusAvailable(now, r.extraBonusStartDate, extraBonusStartedAtField.ExtraBonusStartedAt, r.extraBonusIndicesDistribution, id, int16(utcOffsetField.UTCOffset), &extraBonusIndex, &extraBonusDaysClaimNotAvailableField.ExtraBonusDaysClaimNotAvailable, &extraBonusLastClaimAvailableAtField.ExtraBonusLastClaimAvailableAt); bonusAvailable { //nolint:lll // .
-		if extraBonus = calculateExtraBonus(); extraBonus == 0 {
-			return nil, ErrNotFound
-		} else {
-			return &availableExtraBonus{
-				ExtraBonusLastClaimAvailableAtField: extraBonusLastClaimAvailableAtField,
-				ExtraBonusStartedAtField:            model.ExtraBonusStartedAtField{ExtraBonusStartedAt: now},
-				DeserializedUsersKey:                model.DeserializedUsersKey{ID: id},
-				ExtraBonusField:                     model.ExtraBonusField{ExtraBonus: extraBonus},
-			}, nil
-		}
-	} else if !bonusClaimable {
-		return nil, ErrNotFound
-	} else {
-		if extraBonus = calculateExtraBonus(); extraBonus == 0 {
-			return nil, ErrNotFound
-		} else {
-			extraBonusLastClaimAvailableAtField.ExtraBonusLastClaimAvailableAt = nil
-		}
-	}
-
-	return &availableExtraBonus{
-		ExtraBonusLastClaimAvailableAtField: extraBonusLastClaimAvailableAtField,
-		ExtraBonusStartedAtField:            model.ExtraBonusStartedAtField{ExtraBonusStartedAt: now},
-		DeserializedUsersKey:                model.DeserializedUsersKey{ID: id},
-		ExtraBonusField:                     model.ExtraBonusField{ExtraBonus: extraBonus},
-	}, nil
 }
 
 func (s *deviceMetadataTableSource) Process(ctx context.Context, msg *messagebroker.Message) error { //nolint:funlen // .
