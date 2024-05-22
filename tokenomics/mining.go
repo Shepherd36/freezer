@@ -182,13 +182,13 @@ func (r *repository) GetMiningSummary(ctx context.Context, userID string) (*Mini
 		model.SlashingRateT2Field
 		model.PreStakingBonusField
 		model.ExtraBonusField
+		model.PreStakingAllocationField
 		model.IDT0Field
+		model.UTCOffsetField
 		model.ActiveT1ReferralsField
 		model.ActiveT2ReferralsField
 		model.ExtraBonusDaysClaimNotAvailableResettableField
 		model.NewsSeenField
-		model.PreStakingAllocationField
-		model.UTCOffsetField
 		model.KYCStepBlockedField
 	}](ctx, r.db, model.SerializedUsersKey(id))
 	if err != nil || len(ms) == 0 {

@@ -24,8 +24,8 @@ import (
 type (
 	mockedDummyEthClient struct {
 		dropErr error
-		gas     int64
 		txErr   map[string]error
+		gas     int64
 	}
 	mockedAirDropper struct {
 		errBefore int

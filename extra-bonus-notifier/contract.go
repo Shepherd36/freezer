@@ -52,8 +52,8 @@ const (
 var (
 	//nolint:gochecknoglobals // Singleton & global config mounted only during bootstrap.
 	cfg struct {
-		messagebrokerConfig   `mapstructure:",squash"` //nolint:tagliatelle // Nope.
 		ExtraBonusConfig      `mapstructure:",squash"` //nolint:tagliatelle // Nope.
+		messagebrokerConfig   `mapstructure:",squash"` //nolint:tagliatelle // Nope.
 		MiningSessionDuration stdlibtime.Duration      `yaml:"miningSessionDuration"`
 		Workers               int64                    `yaml:"workers"`
 		BatchSize             int64                    `yaml:"batchSize"`

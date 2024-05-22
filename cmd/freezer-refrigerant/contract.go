@@ -27,9 +27,9 @@ type (
 		UserID string `uri:"userId" swaggerignore:"true" required:"true" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"`
 	}
 	StartOrUpdatePreStakingRequestBody struct {
-		UserID     string `uri:"userId" swaggerignore:"true" required:"true" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"`
 		Years      *uint8 `json:"years" required:"true" maximum:"5" example:"1"`
 		Allocation *uint8 `json:"allocation" required:"true" maximum:"100" example:"100"`
+		UserID     string `uri:"userId" swaggerignore:"true" required:"true" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"`
 	}
 )
 

@@ -62,6 +62,17 @@ var (
 )
 
 type (
+	MiningBoostLevel struct {
+		ICEPrice            string              `json:"icePrice" example:"1234.1234"`
+		MiningSessionLength stdlibtime.Duration `json:"miningSessionLength" example:"24h"`
+		MiningRateBonus     uint16              `json:"miningRateBonus" example:"100"`
+		MaxT1Referrals      uint8               `json:"maxT1Referrals" example:"5"`
+		SlashingDisabled    bool                `json:"slashingDisabled" example:"false"`
+	}
+	MiningBoostSummary struct {
+		Levels            []*MiningBoostLevel `json:"levels"`
+		CurrentLevelIndex uint8               `json:"currentLevelIndex" example:"0"`
+	}
 	MiningRateType string
 	Miner          struct {
 		Balance           string `json:"balance,omitempty" example:"12345.6334"`
@@ -114,8 +125,8 @@ type (
 		detailedCoinMetrics.Details
 	}
 	TotalCoinsSummary struct {
-		TimeSeries        []*TotalCoinsTimeSeriesDataPoint `json:"timeSeries"`
 		BlockchainDetails *BlockchainDetails               `json:"blockchainDetails"`
+		TimeSeries        []*TotalCoinsTimeSeriesDataPoint `json:"timeSeries"`
 		TotalCoins
 	}
 	AdoptionSummary struct {
@@ -324,17 +335,27 @@ type (
 
 	blockchainCoinStatsJSON struct {
 		CoinsAddedHistory []*struct {
-			CoinsAdded float64    `json:"coinsAdded"`
 			Date       *time.Time `json:"date"`
+			CoinsAdded float64    `json:"coinsAdded"`
 		} `json:"coinsAddedHistory"`
 	}
 
 	Config struct {
-		disableAdvancedTeam        *atomic.Pointer[[]string]
-		kycConfigJSON              *atomic.Pointer[kycConfigJSON]
-		blockchainCoinStatsJSON    *atomic.Pointer[blockchainCoinStatsJSON]
-		BlockchainCoinStatsJSONURL string `yaml:"blockchain-coin-stats-json-url" mapstructure:"blockchain-coin-stats-json-url"`
-		KYC                        struct {
+		disableAdvancedTeam                 *atomic.Pointer[[]string]
+		kycConfigJSON                       *atomic.Pointer[kycConfigJSON]
+		blockchainCoinStatsJSON             *atomic.Pointer[blockchainCoinStatsJSON]
+		BlockchainCoinStatsJSONURL          string `yaml:"blockchain-coin-stats-json-url" mapstructure:"blockchain-coin-stats-json-url"`
+		extrabonusnotifier.ExtraBonusConfig `mapstructure:",squash"`
+		AdoptionMilestoneSwitch             struct {
+			ActiveUserMilestones []struct {
+				Users          uint64  `yaml:"users"`
+				BaseMiningRate float64 `yaml:"baseMiningRate"`
+			} `yaml:"activeUserMilestones"`
+			ConsecutiveDurationsRequired uint64              `yaml:"consecutiveDurationsRequired"`
+			Duration                     stdlibtime.Duration `yaml:"duration"`
+		} `yaml:"adoptionMilestoneSwitch"`
+		messagebroker.Config `mapstructure:",squash"`
+		KYC                  struct {
 			RequireQuizOnlyOnSpecificDayOfWeek *int                `yaml:"require-quiz-only-on-specific-day-of-week" mapstructure:"require-quiz-only-on-specific-day-of-week"` //nolint:lll // .
 			TryResetKYCStepsURL                string              `yaml:"try-reset-kyc-steps-url" mapstructure:"try-reset-kyc-steps-url"`
 			FaceAuthAvailabilityURL            string              `yaml:"face-auth-availability-url" mapstructure:"face-auth-availability-url"`
@@ -346,32 +367,17 @@ type (
 			DynamicSocialDelay                 stdlibtime.Duration `yaml:"dynamic-social-delay" mapstructure:"dynamic-social-delay"`
 			QuizDelay                          stdlibtime.Duration `yaml:"quiz-delay" mapstructure:"quiz-delay"`
 		} `yaml:"kyc" mapstructure:"kyc"`
-		AdoptionMilestoneSwitch struct {
-			ActiveUserMilestones []struct {
-				Users          uint64  `yaml:"users"`
-				BaseMiningRate float64 `yaml:"baseMiningRate"`
-			} `yaml:"activeUserMilestones"`
-			ConsecutiveDurationsRequired uint64              `yaml:"consecutiveDurationsRequired"`
-			Duration                     stdlibtime.Duration `yaml:"duration"`
-		} `yaml:"adoptionMilestoneSwitch"`
-		messagebroker.Config                `mapstructure:",squash"`
-		extrabonusnotifier.ExtraBonusConfig `mapstructure:",squash"`
-		RollbackNegativeMining              struct {
-			Available struct {
-				After stdlibtime.Duration `yaml:"after"`
-				Until stdlibtime.Duration `yaml:"until"`
-			} `yaml:"available"`
-		} `yaml:"rollbackNegativeMining"`
 		MiningSessionDuration struct {
 			Min                      stdlibtime.Duration `yaml:"min"`
 			Max                      stdlibtime.Duration `yaml:"max"`
 			WarnAboutExpirationAfter stdlibtime.Duration `yaml:"warnAboutExpirationAfter"`
 		} `yaml:"miningSessionDuration"`
-		ReferralBonusMiningRates struct {
-			T0 uint16 `yaml:"t0"`
-			T1 uint32 `yaml:"t1"`
-			T2 uint32 `yaml:"t2"`
-		} `yaml:"referralBonusMiningRates"`
+		RollbackNegativeMining struct {
+			Available struct {
+				After stdlibtime.Duration `yaml:"after"`
+				Until stdlibtime.Duration `yaml:"until"`
+			} `yaml:"available"`
+		} `yaml:"rollbackNegativeMining"`
 		ConsecutiveNaturalMiningSessionsRequiredFor1ExtraFreeArtificialMiningSession struct {
 			Min uint64 `yaml:"min"`
 			Max uint64 `yaml:"max"`
@@ -383,6 +389,11 @@ type (
 		DetailedCoinMetrics struct {
 			RefreshInterval stdlibtime.Duration `yaml:"refresh-interval" mapstructure:"refresh-interval"`
 		} `yaml:"detailed-coin-metrics" mapstructure:"detailed-coin-metrics"`
+		ReferralBonusMiningRates struct {
+			T0 uint16 `yaml:"t0"`
+			T1 uint32 `yaml:"t1"`
+			T2 uint32 `yaml:"t2"`
+		} `yaml:"referralBonusMiningRates"`
 		T1LimitCount int32 `yaml:"t1LimitCount"`
 	}
 )

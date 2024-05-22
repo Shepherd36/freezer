@@ -67,16 +67,15 @@ type (
 		model.BalanceSoloPendingField
 		model.BalanceT1PendingField
 		model.BalanceT2PendingField
-		model.ActiveT1ReferralsField
-		model.ActiveT2ReferralsField
 		model.PreStakingBonusField
 		model.PreStakingAllocationField
 		model.ExtraBonusField
 		model.UTCOffsetField
+		model.ActiveT1ReferralsField
+		model.ActiveT2ReferralsField
 	}
 
 	UpdatedUser struct { // This is public only because we have to embed it, and it has to be if so.
-		model.UserIDField
 		model.ExtraBonusLastClaimAvailableAtField
 		model.BalanceLastUpdatedAtField
 		model.ResurrectSoloUsedAtField
@@ -89,6 +88,9 @@ type (
 		model.BalanceT0EthereumPendingField
 		model.BalanceT1EthereumPendingField
 		model.BalanceT2EthereumPendingField
+		model.KYCQuizDisabledResettableField
+		model.KYCQuizCompletedResettableField
+		model.UserIDField
 		model.DeserializedUsersKey
 		model.IDT0Field
 		model.IDTMinus1Field
@@ -122,8 +124,6 @@ type (
 		model.SlashingRateForT0Field
 		model.SlashingRateForTMinus1Field
 		model.ExtraBonusDaysClaimNotAvailableField
-		model.KYCQuizDisabledResettableField
-		model.KYCQuizCompletedResettableField
 	}
 	referralUpdated struct {
 		model.DeserializedUsersKey
@@ -132,15 +132,16 @@ type (
 	}
 
 	referral struct {
+		model.KYCState
 		model.MiningSessionSoloStartedAtField
 		model.MiningSessionSoloEndedAtField
 		model.MiningSessionSoloPreviouslyEndedAtField
 		model.ResurrectSoloUsedAtField
+		model.LatestDeviceField
 		model.UserIDField
 		model.CountryField
 		model.UsernameField
 		model.MiningBlockchainAccountAddressField
-		model.KYCState
 		model.IDT0Field
 		model.DeserializedUsersKey
 		model.BalanceTotalStandardField
@@ -150,7 +151,6 @@ type (
 		model.BalanceT2EthereumField
 		model.PreStakingAllocationField
 		model.PreStakingBonusField
-		model.LatestDeviceField
 	}
 
 	referralCountGuardUpdatedUser struct {
@@ -186,16 +186,16 @@ type (
 		extraBonusIndicesDistribution               map[uint16]map[uint16]uint16
 	}
 	config struct {
-		disableAdvancedTeam                *atomic.Pointer[[]string]
-		coinDistributionCollectorStartedAt *atomic.Pointer[time.Time]
-		coinDistributionCollectorSettings  *atomic.Pointer[coindistribution.CollectorSettings]
-		tokenomics.Config                  `mapstructure:",squash"` //nolint:tagliatelle // Nope.
-		EthereumDistributionFrequency      struct {
+		disableAdvancedTeam                     *atomic.Pointer[[]string]
+		coinDistributionCollectorStartedAt      *atomic.Pointer[time.Time]
+		coinDistributionCollectorSettings       *atomic.Pointer[coindistribution.CollectorSettings]
+		MainnetRewardPoolContributionEthAddress string                   `yaml:"mainnetRewardPoolContributionEthAddress" mapstructure:"mainnetRewardPoolContributionEthAddress"`
+		tokenomics.Config                       `mapstructure:",squash"` //nolint:tagliatelle // Nope.
+		EthereumDistributionFrequency           struct {
 			Min stdlibtime.Duration `yaml:"min"`
 			Max stdlibtime.Duration `yaml:"max"`
 		} `yaml:"ethereumDistributionFrequency" mapstructure:"ethereumDistributionFrequency"`
 		SlashingStartInterval                   stdlibtime.Duration `yaml:"slashingStartInterval"`
-		MainnetRewardPoolContributionEthAddress string              `yaml:"mainnetRewardPoolContributionEthAddress" mapstructure:"mainnetRewardPoolContributionEthAddress"`
 		MainnetRewardPoolContributionPercentage float64             `yaml:"mainnetRewardPoolContributionPercentage" mapstructure:"mainnetRewardPoolContributionPercentage"`
 		Workers                                 int64               `yaml:"workers"`
 		BatchSize                               int64               `yaml:"batchSize"`

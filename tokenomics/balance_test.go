@@ -2028,10 +2028,10 @@ func TestEnhanceWithBlockchainCoinStats(t *testing.T) {
 	t.Run("applied for only one day (first)", func(t *testing.T) {
 		r.cfg.blockchainCoinStatsJSON.Store(&blockchainCoinStatsJSON{
 			CoinsAddedHistory: []*struct {
-				CoinsAdded float64    `json:"coinsAdded"`
 				Date       *time.Time `json:"date"`
+				CoinsAdded float64    `json:"coinsAdded"`
 			}{
-				{100, time.New(dates[0].Date.Add(-1 * stdlibtime.Second))},
+				{CoinsAdded: 100, Date: time.New(dates[0].Date.Add(-1 * stdlibtime.Second))},
 			},
 		})
 		resultStats := r.enhanceWithBlockchainCoinStats(sourceStats)
@@ -2043,13 +2043,13 @@ func TestEnhanceWithBlockchainCoinStats(t *testing.T) {
 	t.Run("applied for all days, nothing before most recent", func(t *testing.T) {
 		r.cfg.blockchainCoinStatsJSON.Store(&blockchainCoinStatsJSON{
 			CoinsAddedHistory: []*struct {
-				CoinsAdded float64    `json:"coinsAdded"`
 				Date       *time.Time `json:"date"`
+				CoinsAdded float64    `json:"coinsAdded"`
 			}{
-				{10740, time.New(dates[0].Date.Add(-1 * stdlibtime.Second))},
-				{10590, time.New(dates[1].Date.Add(-1 * stdlibtime.Second))},
-				{10430, time.New(dates[2].Date.Add(-1 * stdlibtime.Second))},
-				{10510, time.New(dates[3].Date.Add(-1 * stdlibtime.Second))},
+				{CoinsAdded: 10740, Date: time.New(dates[0].Date.Add(-1 * stdlibtime.Second))},
+				{CoinsAdded: 10590, Date: time.New(dates[1].Date.Add(-1 * stdlibtime.Second))},
+				{CoinsAdded: 10430, Date: time.New(dates[2].Date.Add(-1 * stdlibtime.Second))},
+				{CoinsAdded: 10510, Date: time.New(dates[3].Date.Add(-1 * stdlibtime.Second))},
 			},
 		})
 		resultStats := r.enhanceWithBlockchainCoinStats(sourceStats)
@@ -2066,14 +2066,14 @@ func TestEnhanceWithBlockchainCoinStats(t *testing.T) {
 		mostRecentAdditionalCoins := float64(100)
 		r.cfg.blockchainCoinStatsJSON.Store(&blockchainCoinStatsJSON{
 			CoinsAddedHistory: []*struct {
-				CoinsAdded float64    `json:"coinsAdded"`
 				Date       *time.Time `json:"date"`
+				CoinsAdded float64    `json:"coinsAdded"`
 			}{
-				{mostRecentAdditionalCoins, time.New(dates[0].Date.Add(-10 * stdlibtime.Second))},
-				{10740, time.New(dates[0].Date.Add(-1 * stdlibtime.Second))},
-				{10590, time.New(dates[1].Date.Add(-1 * stdlibtime.Second))},
-				{10430, time.New(dates[2].Date.Add(-1 * stdlibtime.Second))},
-				{10510, time.New(dates[3].Date.Add(-1 * stdlibtime.Second))},
+				{CoinsAdded: mostRecentAdditionalCoins, Date: time.New(dates[0].Date.Add(-10 * stdlibtime.Second))},
+				{CoinsAdded: 10740, Date: time.New(dates[0].Date.Add(-1 * stdlibtime.Second))},
+				{CoinsAdded: 10590, Date: time.New(dates[1].Date.Add(-1 * stdlibtime.Second))},
+				{CoinsAdded: 10430, Date: time.New(dates[2].Date.Add(-1 * stdlibtime.Second))},
+				{CoinsAdded: 10510, Date: time.New(dates[3].Date.Add(-1 * stdlibtime.Second))},
 			},
 		})
 		resultStats := r.enhanceWithBlockchainCoinStats(sourceStats)

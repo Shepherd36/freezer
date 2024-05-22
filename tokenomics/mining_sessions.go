@@ -32,6 +32,7 @@ type (
 		model.DeserializedUsersKey
 	}
 	getCurrentMiningSession struct {
+		model.ExtraBonusStartedAtField
 		StartOrExtendMiningSession
 		model.KYCState
 		model.LatestDeviceField
@@ -47,7 +48,6 @@ type (
 		model.IDTMinus1Field
 		model.PreStakingAllocationField
 		model.PreStakingBonusField
-		model.ExtraBonusStartedAtField
 	}
 )
 
