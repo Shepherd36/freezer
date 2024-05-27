@@ -8,10 +8,12 @@ import (
 	"fmt"
 	stdlibtime "time"
 
+	ethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/constraints"
 
+	coindistribution "github.com/ice-blockchain/freezer/coin-distribution/internal"
 	appCfg "github.com/ice-blockchain/wintr/config"
 	"github.com/ice-blockchain/wintr/connectors/storage/v2"
 	"github.com/ice-blockchain/wintr/log"
@@ -177,4 +179,13 @@ func (cd *coinDistributer) Close() error {
 
 func (cd *coinDistributer) CheckHealth(ctx context.Context) error {
 	return errors.Wrap(cd.DB.Ping(ctx), "[health-check] failed to ping DB")
+}
+
+var SmartContractABI = mustLoadSmartContractABI()
+
+func mustLoadSmartContractABI() *ethabi.ABI {
+	abi, err := coindistribution.CoindistributionMetaData.GetAbi()
+	log.Panic(errors.Wrap(err, "failed to get smart contract ABI"))
+
+	return abi
 }

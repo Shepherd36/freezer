@@ -352,10 +352,18 @@ type (
 	KYCQuizDisabledResettableField struct {
 		KYCQuizDisabled *FlexibleBool `json:"kycQuizDisabled" redis:"kyc_quiz_disabled,omitempty"`
 	}
+
+	MiningBoostLevelIndexField struct {
+		MiningBoostLevelIndex *FlexibleUint64 `json:"miningBoostLevelIndex" redis:"mining_boost_level_index,omitempty"`
+	}
+	MiningBoostAmountBurntField struct {
+		MiningBoostAmountBurnt *FlexibleFloat64 `json:"miningBoostAmountBurnt" redis:"mining_boost_amount_burnt,omitempty"`
+	}
 )
 
 type (
 	FlexibleFloat64 float64
+	FlexibleUint64  uint64
 	FlexibleBool    bool
 )
 
@@ -385,6 +393,32 @@ func (ff *FlexibleFloat64) UnmarshalText(text []byte) error {
 	return nil
 }
 
+func (ff *FlexibleUint64) UnmarshalBinary(data []byte) error {
+	return ff.UnmarshalText(data)
+}
+
+func (ff *FlexibleUint64) MarshalBinary() ([]byte, error) {
+	return ff.MarshalText()
+}
+
+func (ff *FlexibleUint64) MarshalText() ([]byte, error) {
+	if ff == nil {
+		return nil, nil
+	}
+
+	return []byte(strconv.FormatUint(uint64(*ff), 10)), nil
+}
+
+func (ff *FlexibleUint64) UnmarshalText(text []byte) error {
+	val, err := strconv.ParseUint(string(text), 10, 64)
+	if err != nil {
+		return errors.Wrapf(err, "failed to ParseUint `%v`", text)
+	}
+	*ff = FlexibleUint64(val)
+
+	return nil
+}
+
 func (fb *FlexibleBool) UnmarshalBinary(data []byte) error {
 	return fb.UnmarshalText(data)
 }
@@ -404,7 +438,7 @@ func (fb *FlexibleBool) MarshalText() ([]byte, error) {
 func (fb *FlexibleBool) UnmarshalText(text []byte) error {
 	val, err := strconv.ParseBool(string(text))
 	if err != nil {
-		return errors.Wrapf(err, "failed to ParseFloat `%v`", text)
+		return errors.Wrapf(err, "failed to ParseBool `%v`", text)
 	}
 	*fb = FlexibleBool(val)
 

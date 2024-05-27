@@ -116,6 +116,34 @@ definitions:
         example: jdoe
         type: string
     type: object
+  tokenomics.MiningBoostLevel:
+    properties:
+      icePrice:
+        example: "1234.1234"
+        type: string
+      maxT1Referrals:
+        example: 5
+        type: integer
+      miningRateBonus:
+        example: 100
+        type: integer
+      miningSessionLengthSeconds:
+        example: 86400
+        type: integer
+      slashingDisabled:
+        example: false
+        type: boolean
+    type: object
+  tokenomics.MiningBoostSummary:
+    properties:
+      currentLevelIndex:
+        example: 0
+        type: integer
+      levels:
+        items:
+          $ref: '#/definitions/tokenomics.MiningBoostLevel'
+        type: array
+    type: object
   tokenomics.MiningRateBonuses:
     properties:
       extra:
@@ -554,6 +582,60 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: if not allowed
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Tokenomics
+  /tokenomics/{userId}/mining-boost-summary:
+    get:
+      consumes:
+      - application/json
+      description: Returns the mining boost related information.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the user
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tokenomics.MiningBoostSummary'
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: if not allowed
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "404":
+          description: if not found
           schema:
             $ref: '#/definitions/server.ErrorResponse'
         "422":

@@ -45,6 +45,7 @@ func New(ctx context.Context, _ context.CancelFunc) Repository {
 		pictureClient:       picture.New(applicationYamlKey),
 		detailedMetricsRepo: detailedCoinMetrics.New(),
 	}
+	go repo.startICEPriceSyncer(ctx)
 	go repo.startDisableAdvancedTeamCfgSyncer(ctx)
 	go repo.startBlockchainCoinStatsJSONSyncer(ctx)
 
@@ -62,11 +63,12 @@ func StartProcessor(ctx context.Context, cancel context.CancelFunc) Processor {
 	appCfg.MustLoadFromKey(applicationYamlKey, &cfg)
 	dwhClient := dwh.MustConnect(ctx, applicationYamlKey)
 	prc := &processor{repository: &repository{
-		cfg:           &cfg,
-		db:            storage.MustConnect(context.Background(), applicationYamlKey),
-		mb:            messagebroker.MustConnect(context.Background(), applicationYamlKey),
-		dwh:           dwhClient,
-		pictureClient: picture.New(applicationYamlKey),
+		cfg:                 &cfg,
+		db:                  storage.MustConnect(context.Background(), applicationYamlKey),
+		mb:                  messagebroker.MustConnect(context.Background(), applicationYamlKey),
+		dwh:                 dwhClient,
+		pictureClient:       picture.New(applicationYamlKey),
+		detailedMetricsRepo: detailedCoinMetrics.New(),
 	}}
 	//nolint:contextcheck // It's intended. Cuz we want to close everything gracefully.
 	mbConsumer := messagebroker.MustConnectAndStartConsuming(context.Background(), cancel, applicationYamlKey,
@@ -80,6 +82,7 @@ func StartProcessor(ctx context.Context, cancel context.CancelFunc) Processor {
 		return prc.dwh.Close()
 	})
 
+	go prc.startICEPriceSyncer(ctx)
 	go prc.startDisableAdvancedTeamCfgSyncer(ctx)
 	go prc.startKYCConfigJSONSyncer(ctx)
 	prc.mustInitAdoptions(ctx)

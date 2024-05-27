@@ -18,11 +18,47 @@ import (
 func (s *service) setupTokenomicsRoutes(router *server.Router) {
 	router.
 		Group("/v1r").
+		GET("/tokenomics/:userId/mining-boost-summary", server.RootHandler(s.GetMiningBoostSummary)).
 		GET("/tokenomics/:userId/mining-summary", server.RootHandler(s.GetMiningSummary)).
 		GET("/tokenomics/:userId/pre-staking-summary", server.RootHandler(s.GetPreStakingSummary)).
 		GET("/tokenomics/:userId/balance-summary", server.RootHandler(s.GetBalanceSummary)).
 		GET("/tokenomics/:userId/balance-history", server.RootHandler(s.GetBalanceHistory)).
 		GET("/tokenomics/:userId/ranking-summary", server.RootHandler(s.GetRankingSummary))
+}
+
+// GetMiningBoostSummary godoc
+//
+//	@Schemes
+//	@Description	Returns the mining boost related information.
+//	@Tags			Tokenomics
+//	@Accept			json
+//	@Produce		json
+//	@Param			Authorization	header		string	true	"Insert your access token"	default(Bearer <Add access token here>)
+//	@Param			userId			path		string	true	"ID of the user"
+//	@Success		200				{object}	tokenomics.MiningBoostSummary
+//	@Failure		400				{object}	server.ErrorResponse	"if validations fail"
+//	@Failure		401				{object}	server.ErrorResponse	"if not authorized"
+//	@Failure		403				{object}	server.ErrorResponse	"if not allowed"
+//	@Failure		404				{object}	server.ErrorResponse	"if not found"
+//	@Failure		422				{object}	server.ErrorResponse	"if syntax fails"
+//	@Failure		500				{object}	server.ErrorResponse
+//	@Failure		504				{object}	server.ErrorResponse	"if request times out"
+//	@Router			/tokenomics/{userId}/mining-boost-summary [GET].
+func (s *service) GetMiningBoostSummary( //nolint:gocritic // False negative.
+	ctx context.Context,
+	req *server.Request[GetMiningBoostSummaryArg, tokenomics.MiningBoostSummary],
+) (*server.Response[tokenomics.MiningBoostSummary], *server.Response[server.ErrorResponse]) {
+	summary, err := s.tokenomicsRepository.GetMiningBoostSummary(ctx, req.Data.UserID)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to get user's mining boost summary for userID:%v", req.Data.UserID)
+		if errors.Is(err, tokenomics.ErrRelationNotFound) {
+			return nil, server.NotFound(err, userNotFoundErrorCode)
+		}
+
+		return nil, server.Unexpected(err)
+	}
+
+	return server.OK(summary), nil
 }
 
 // GetMiningSummary godoc

@@ -30,6 +30,26 @@ cmd/freezer-refrigerant:
     maxLimit: 1000
   wintr/auth/ice:
     jwtSecret: bogus
+mining-boost: &mining-boost
+  networkEndpoints:
+    ethereum:
+      - https://goerli.drpc.org
+    arbitrum:
+      - https://rinkeby.arbitrum.io/rpc
+    bnb:
+      - https://data-seed-prebsc-1-s1.binance.org:8545
+  paymentAddress: xxxxxxxx
+  levels:
+    12.3:
+      miningSessionLengthSeconds: 120
+      miningRateBonus: 200
+      maxT1Referrals: 10
+      slashingDisabled: true
+    10.3:
+      miningSessionLengthSeconds: 60
+      miningRateBonus: 100
+      maxT1Referrals: 5
+      slashingDisabled: false
 tokenomics: &tokenomics
   blockchain-coin-stats-json-url: https://ice-staging.b-cdn.net/assets/auth-config.json
   kyc:
@@ -170,6 +190,7 @@ tokenomics: &tokenomics
       - 9
       - 20
     kycPassedExtraBonus: 300
+  mining-boost: *mining-boost
 wintr/connectors/storage/v2: &db
   runDDL: true
   primaryURL: postgresql://root:pass@localhost:5433/eskimo

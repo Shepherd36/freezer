@@ -31,6 +31,15 @@ type (
 		Allocation *uint8 `json:"allocation" required:"true" maximum:"100" example:"100"`
 		UserID     string `uri:"userId" swaggerignore:"true" required:"true" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"`
 	}
+	InitializeMiningBoostUpgradeRequestBody struct {
+		MiningBoostLevelIndex *uint8 `json:"miningBoostLevelIndex" required:"true" example:"0"`
+		UserID                string `uri:"userId" swaggerignore:"true" required:"true" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"`
+	}
+	FinalizeMiningBoostUpgradeRequestBody struct {
+		UserID  string                           `uri:"userId" swaggerignore:"true" required:"true" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"`
+		Network tokenomics.BlockchainNetworkType `json:"network" required:"true" example:"ethereum" enums:"arbitrum,bnb,ethereum"`
+		TXHash  string                           `json:"txHash" required:"true" example:"0xf75c78ab01ee4641be46794756f46137dea03a4980126dce4f2df933cccb34ea"`
+	}
 )
 
 // Private API.
@@ -44,15 +53,17 @@ const (
 
 // Values for server.ErrorResponse#Code.
 const (
-	userNotFoundErrorCode                 = "USER_NOT_FOUND"
-	prestakingDisabled                    = "PRESTAKING_DISABLED"
-	miningInProgressErrorCode             = "MINING_IN_PROGRESS"
-	raceConditionErrorCode                = "RACE_CONDITION"
-	resurrectionDecisionRequiredErrorCode = "RESURRECTION_DECISION_REQUIRED"
-	kycStepsRequiredErrorCode             = "KYC_STEPS_REQUIRED"
-	miningDisabledErrorCode               = "MINING_DISABLED"
-	noExtraBonusAvailableErrorCode        = "NO_EXTRA_BONUS_AVAILABLE"
-	extraBonusAlreadyClaimedErrorCode     = "EXTRA_BONUS_ALREADY_CLAIMED"
+	userNotFoundErrorCode                         = "USER_NOT_FOUND"
+	prestakingDisabled                            = "PRESTAKING_DISABLED"
+	miningInProgressErrorCode                     = "MINING_IN_PROGRESS"
+	raceConditionErrorCode                        = "RACE_CONDITION"
+	resurrectionDecisionRequiredErrorCode         = "RESURRECTION_DECISION_REQUIRED"
+	kycStepsRequiredErrorCode                     = "KYC_STEPS_REQUIRED"
+	miningDisabledErrorCode                       = "MINING_DISABLED"
+	noExtraBonusAvailableErrorCode                = "NO_EXTRA_BONUS_AVAILABLE"
+	extraBonusAlreadyClaimedErrorCode             = "EXTRA_BONUS_ALREADY_CLAIMED"
+	noPendingMiningBoostUpgradeFoundErrorCode     = "NO_PENDING_MINING_BOOST_UPGRADE_FOUND"
+	invalidMiningBoostUpgradeTransactionErrorCode = "INVALID_MINING_BOOST_UPGRADE_TRANSACTION"
 
 	defaultDistributionLimit = 5000
 )

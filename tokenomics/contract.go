@@ -9,6 +9,8 @@ import (
 	"sync/atomic"
 	stdlibtime "time"
 
+	ethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
 	"github.com/ice-blockchain/eskimo/users"
@@ -32,8 +34,14 @@ const (
 	NegativeMiningRateType MiningRateType = "negative"
 	NoneMiningRateType     MiningRateType = "none"
 )
+const (
+	ArbitrumBlockchainNetworkType BlockchainNetworkType = "arbitrum"
+	BNBBlockchainNetworkType      BlockchainNetworkType = "bnb"
+	EthereumBlockchainNetworkType BlockchainNetworkType = "ethereum"
+)
 
 var (
+	ErrInvalidMiningBoostUpgradeTX                     = errors.New("transaction for upgrading mining boost tier is invalid")
 	ErrNotFound                                        = errors.New("not found")
 	ErrRelationNotFound                                = errors.New("relationship not found")
 	ErrDuplicate                                       = errors.New("duplicate")
@@ -62,16 +70,23 @@ var (
 )
 
 type (
+	BlockchainNetworkType     string
+	PendingMiningBoostUpgrade struct {
+		ExpiresAt      *time.Time `json:"expiresAt" example:"2022-01-03T16:20:52.156534Z"`
+		ICEPrice       string     `json:"icePrice" example:"1234.1234"`
+		PaymentAddress string     `json:"paymentAddress" example:"UQBLoASuwnSQVdsw4vZzkhCsN3bruqh68trjf03kHoooMc2k"`
+	}
 	MiningBoostLevel struct {
-		ICEPrice            string              `json:"icePrice" example:"1234.1234"`
-		MiningSessionLength stdlibtime.Duration `json:"miningSessionLength" example:"24h"`
-		MiningRateBonus     uint16              `json:"miningRateBonus" example:"100"`
-		MaxT1Referrals      uint8               `json:"maxT1Referrals" example:"5"`
-		SlashingDisabled    bool                `json:"slashingDisabled" example:"false"`
+		ICEPrice                   string  `json:"icePrice" example:"1234.1234" mapstructure:"-"`
+		icePrice                   float64 `json:"-" example:"1234.1234" mapstructure:"-"`
+		MiningSessionLengthSeconds uint32  `json:"miningSessionLengthSeconds" example:"86400" mapstructure:"miningSessionLengthSeconds"`
+		MiningRateBonus            uint16  `json:"miningRateBonus" example:"100" mapstructure:"miningRateBonus"`
+		MaxT1Referrals             uint8   `json:"maxT1Referrals" example:"5" mapstructure:"maxT1Referrals"`
+		SlashingDisabled           bool    `json:"slashingDisabled" example:"false" mapstructure:"slashingDisabled"`
 	}
 	MiningBoostSummary struct {
+		CurrentLevelIndex *uint8              `json:"currentLevelIndex,omitempty" example:"0"`
 		Levels            []*MiningBoostLevel `json:"levels"`
-		CurrentLevelIndex uint8               `json:"currentLevelIndex" example:"0"`
 	}
 	MiningRateType string
 	Miner          struct {
@@ -202,6 +217,7 @@ type (
 		GlobalRank uint64 `json:"globalRank" example:"12333"`
 	}
 	ReadRepository interface {
+		GetMiningBoostSummary(ctx context.Context, userID string) (*MiningBoostSummary, error)
 		GetBalanceSummary(ctx context.Context, userID string) (*BalanceSummary, error)
 		GetTotalCoinsSummary(ctx context.Context, days uint64, utcOffset stdlibtime.Duration) (*TotalCoinsSummary, error)
 		GetRankingSummary(ctx context.Context, userID string) (*RankingSummary, error)
@@ -215,6 +231,9 @@ type (
 		StartNewMiningSession(ctx context.Context, ms *MiningSummary, rollbackNegativeMiningProgress *bool, skipKYCSteps []users.KYCStep) error
 		ClaimExtraBonus(ctx context.Context, ebs *ExtraBonusSummary) error
 		StartOrUpdatePreStaking(context.Context, *PreStakingSummary) error
+
+		InitializeMiningBoostUpgrade(ctx context.Context, miningBoostLevelIndex uint8, userID string) (*PendingMiningBoostUpgrade, error)
+		FinalizeMiningBoostUpgrade(ctx context.Context, network BlockchainNetworkType, txHash, userID string) (*PendingMiningBoostUpgrade, error)
 	}
 	Repository interface {
 		io.Closer
@@ -341,9 +360,19 @@ type (
 	}
 
 	Config struct {
-		disableAdvancedTeam                 *atomic.Pointer[[]string]
-		kycConfigJSON                       *atomic.Pointer[kycConfigJSON]
-		blockchainCoinStatsJSON             *atomic.Pointer[blockchainCoinStatsJSON]
+		disableAdvancedTeam     *atomic.Pointer[[]string]
+		kycConfigJSON           *atomic.Pointer[kycConfigJSON]
+		blockchainCoinStatsJSON *atomic.Pointer[blockchainCoinStatsJSON]
+		MiningBoost             struct {
+			icePrice                      *atomic.Pointer[float64]                      `yaml:"-" mapstructure:"-" json:"-"`
+			levels                        *atomic.Pointer[[]*MiningBoostLevel]          `yaml:"-" mapstructure:"-" json:"-"`
+			networkEndpointCurrentLBIndex map[BlockchainNetworkType]*atomic.Uint64      `yaml:"-" mapstructure:"-" json:"-"`
+			networkClients                map[BlockchainNetworkType][]*ethclient.Client `yaml:"-" mapstructure:"-" json:"-"`
+			NetworkEndpoints              map[BlockchainNetworkType][]string            `yaml:"networkEndpoints" mapstructure:"networkEndpoints"`
+			Levels                        map[float64]*MiningBoostLevel                 `yaml:"levels" mapstructure:"levels"`
+			PaymentAddress                string                                        `yaml:"paymentAddress" mapstructure:"paymentAddress"`
+			paymentAddress                ethcommon.Address                             `yaml:"-" mapstructure:"-" json:"-"`
+		} `yaml:"mining-boost" mapstructure:"mining-boost"`
 		BlockchainCoinStatsJSONURL          string `yaml:"blockchain-coin-stats-json-url" mapstructure:"blockchain-coin-stats-json-url"`
 		extrabonusnotifier.ExtraBonusConfig `mapstructure:",squash"`
 		AdoptionMilestoneSwitch             struct {

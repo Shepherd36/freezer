@@ -42,6 +42,26 @@ definitions:
         example: myusername
         type: string
     type: object
+  main.FinalizeMiningBoostUpgradeRequestBody:
+    properties:
+      network:
+        allOf:
+        - $ref: '#/definitions/tokenomics.BlockchainNetworkType'
+        enum:
+        - arbitrum
+        - bnb
+        - ethereum
+        example: ethereum
+      txHash:
+        example: 0xf75c78ab01ee4641be46794756f46137dea03a4980126dce4f2df933cccb34ea
+        type: string
+    type: object
+  main.InitializeMiningBoostUpgradeRequestBody:
+    properties:
+      miningBoostLevelIndex:
+        example: 0
+        type: integer
+    type: object
   main.StartNewMiningSessionRequestBody:
     properties:
       resurrect:
@@ -84,6 +104,16 @@ definitions:
         example: something is missing
         type: string
     type: object
+  tokenomics.BlockchainNetworkType:
+    enum:
+    - arbitrum
+    - bnb
+    - ethereum
+    type: string
+    x-enum-varnames:
+    - ArbitrumBlockchainNetworkType
+    - BNBBlockchainNetworkType
+    - EthereumBlockchainNetworkType
   tokenomics.ExtraBonusSummary:
     properties:
       availableExtraBonus:
@@ -183,6 +213,18 @@ definitions:
       remainingFreeMiningSessions:
         example: 1
         type: integer
+    type: object
+  tokenomics.PendingMiningBoostUpgrade:
+    properties:
+      expiresAt:
+        example: "2022-01-03T16:20:52.156534Z"
+        type: string
+      icePrice:
+        example: "1234.1234"
+        type: string
+      paymentAddress:
+        example: UQBLoASuwnSQVdsw4vZzkhCsN3bruqh68trjf03kHoooMc2k
+        type: string
     type: object
   tokenomics.PreStakingSummary:
     properties:
@@ -416,6 +458,133 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
         "409":
           description: if already claimed
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Tokenomics
+  /tokenomics/{userId}/mining-boosts:
+    patch:
+      consumes:
+      - application/json
+      description: Finalizes the process to enable a new mining boost tier.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the user
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: the type of the client calling this API. I.E. `web`
+        in: query
+        name: x_client_type
+        type: string
+      - description: Request params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.FinalizeMiningBoostUpgradeRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tokenomics.PendingMiningBoostUpgrade'
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: if not allowed
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "404":
+          description: if user not found or process was not initialized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Tokenomics
+    put:
+      consumes:
+      - application/json
+      description: Initializes the process to enable a new mining boost tier.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the user
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: the type of the client calling this API. I.E. `web`
+        in: query
+        name: x_client_type
+        type: string
+      - description: Request params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.InitializeMiningBoostUpgradeRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tokenomics.PendingMiningBoostUpgrade'
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: if not allowed
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "404":
+          description: if user not found
           schema:
             $ref: '#/definitions/server.ErrorResponse'
         "422":

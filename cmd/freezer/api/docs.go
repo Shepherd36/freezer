@@ -414,6 +414,87 @@ const docTemplate = `{
                 }
             }
         },
+        "/tokenomics/{userId}/mining-boost-summary": {
+            "get": {
+                "description": "Returns the mining boost related information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tokenomics"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of the user",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tokenomics.MiningBoostSummary"
+                        }
+                    },
+                    "400": {
+                        "description": "if validations fail",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "if not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "if not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "if not found",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "if syntax fails",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "504": {
+                        "description": "if request times out",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/tokenomics/{userId}/mining-summary": {
             "get": {
                 "description": "Returns the mining related information.",
@@ -812,6 +893,46 @@ const docTemplate = `{
                 "username": {
                     "type": "string",
                     "example": "jdoe"
+                }
+            }
+        },
+        "tokenomics.MiningBoostLevel": {
+            "type": "object",
+            "properties": {
+                "icePrice": {
+                    "type": "string",
+                    "example": "1234.1234"
+                },
+                "maxT1Referrals": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "miningRateBonus": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "miningSessionLengthSeconds": {
+                    "type": "integer",
+                    "example": 86400
+                },
+                "slashingDisabled": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "tokenomics.MiningBoostSummary": {
+            "type": "object",
+            "properties": {
+                "currentLevelIndex": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "levels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/tokenomics.MiningBoostLevel"
+                    }
                 }
             }
         },

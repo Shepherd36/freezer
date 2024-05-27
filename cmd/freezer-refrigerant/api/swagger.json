@@ -312,6 +312,196 @@
                 }
             }
         },
+        "/tokenomics/{userId}/mining-boosts": {
+            "put": {
+                "description": "Initializes the process to enable a new mining boost tier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tokenomics"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of the user",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "the type of the client calling this API. I.E. `web`",
+                        "name": "x_client_type",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Request params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/main.InitializeMiningBoostUpgradeRequestBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tokenomics.PendingMiningBoostUpgrade"
+                        }
+                    },
+                    "400": {
+                        "description": "if validations fail",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "if not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "if not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "if user not found",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "if syntax fails",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "504": {
+                        "description": "if request times out",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Finalizes the process to enable a new mining boost tier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tokenomics"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of the user",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "the type of the client calling this API. I.E. `web`",
+                        "name": "x_client_type",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Request params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/main.FinalizeMiningBoostUpgradeRequestBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tokenomics.PendingMiningBoostUpgrade"
+                        }
+                    },
+                    "400": {
+                        "description": "if validations fail",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "if not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "if not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "if user not found or process was not initialized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "if syntax fails",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "504": {
+                        "description": "if request times out",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/tokenomics/{userId}/mining-sessions": {
             "post": {
                 "description": "Starts a new mining session for the user, if not already in progress with another one.",
@@ -562,6 +752,37 @@
                 }
             }
         },
+        "main.FinalizeMiningBoostUpgradeRequestBody": {
+            "type": "object",
+            "properties": {
+                "network": {
+                    "enum": [
+                        "arbitrum",
+                        "bnb",
+                        "ethereum"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/tokenomics.BlockchainNetworkType"
+                        }
+                    ],
+                    "example": "ethereum"
+                },
+                "txHash": {
+                    "type": "string",
+                    "example": "0xf75c78ab01ee4641be46794756f46137dea03a4980126dce4f2df933cccb34ea"
+                }
+            }
+        },
+        "main.InitializeMiningBoostUpgradeRequestBody": {
+            "type": "object",
+            "properties": {
+                "miningBoostLevelIndex": {
+                    "type": "integer",
+                    "example": 0
+                }
+            }
+        },
         "main.StartNewMiningSessionRequestBody": {
             "type": "object",
             "properties": {
@@ -614,6 +835,19 @@
                     "example": "something is missing"
                 }
             }
+        },
+        "tokenomics.BlockchainNetworkType": {
+            "type": "string",
+            "enum": [
+                "arbitrum",
+                "bnb",
+                "ethereum"
+            ],
+            "x-enum-varnames": [
+                "ArbitrumBlockchainNetworkType",
+                "BNBBlockchainNetworkType",
+                "EthereumBlockchainNetworkType"
+            ]
         },
         "tokenomics.ExtraBonusSummary": {
             "type": "object",
@@ -757,6 +991,23 @@
                 "remainingFreeMiningSessions": {
                     "type": "integer",
                     "example": 1
+                }
+            }
+        },
+        "tokenomics.PendingMiningBoostUpgrade": {
+            "type": "object",
+            "properties": {
+                "expiresAt": {
+                    "type": "string",
+                    "example": "2022-01-03T16:20:52.156534Z"
+                },
+                "icePrice": {
+                    "type": "string",
+                    "example": "1234.1234"
+                },
+                "paymentAddress": {
+                    "type": "string",
+                    "example": "UQBLoASuwnSQVdsw4vZzkhCsN3bruqh68trjf03kHoooMc2k"
                 }
             }
         },

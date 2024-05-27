@@ -15,9 +15,89 @@ import (
 func (s *service) setupTokenomicsRoutes(router *server.Router) {
 	router.
 		Group("/v1w").
+		PUT("/tokenomics/:userId/mining-boosts", server.RootHandler(s.InitializeMiningBoostUpgrade)).
+		PATCH("/tokenomics/:userId/mining-boosts", server.RootHandler(s.FinalizeMiningBoostUpgrade)).
 		POST("/tokenomics/:userId/mining-sessions", server.RootHandler(s.StartNewMiningSession)).
 		POST("/tokenomics/:userId/extra-bonus-claims", server.RootHandler(s.ClaimExtraBonus)).
 		PUT("/tokenomics/:userId/pre-staking", server.RootHandler(s.StartOrUpdatePreStaking))
+}
+
+// InitializeMiningBoostUpgrade godoc
+//
+//	@Schemes
+//	@Description	Initializes the process to enable a new mining boost tier.
+//	@Tags			Tokenomics
+//	@Accept			json
+//	@Produce		json
+//	@Param			Authorization	header		string									true	"Insert your access token"	default(Bearer <Add access token here>)
+//	@Param			userId			path		string									true	"ID of the user"
+//	@Param			x_client_type	query		string									false	"the type of the client calling this API. I.E. `web`"
+//	@Param			request			body		InitializeMiningBoostUpgradeRequestBody	true	"Request params"
+//	@Success		200				{object}	tokenomics.PendingMiningBoostUpgrade
+//	@Failure		400				{object}	server.ErrorResponse	"if validations fail"
+//	@Failure		401				{object}	server.ErrorResponse	"if not authorized"
+//	@Failure		403				{object}	server.ErrorResponse	"if not allowed"
+//	@Failure		404				{object}	server.ErrorResponse	"if user not found"
+//	@Failure		422				{object}	server.ErrorResponse	"if syntax fails"
+//	@Failure		500				{object}	server.ErrorResponse
+//	@Failure		504				{object}	server.ErrorResponse	"if request times out"
+//	@Router			/tokenomics/{userId}/mining-boosts [PUT].
+func (s *service) InitializeMiningBoostUpgrade( //nolint:gocritic // False negative.
+	ctx context.Context,
+	req *server.Request[InitializeMiningBoostUpgradeRequestBody, tokenomics.PendingMiningBoostUpgrade],
+) (*server.Response[tokenomics.PendingMiningBoostUpgrade], *server.Response[server.ErrorResponse]) {
+	resp, err := s.tokenomicsProcessor.InitializeMiningBoostUpgrade(ctx, *req.Data.MiningBoostLevelIndex, req.Data.UserID)
+	if err = errors.Wrapf(err, "failed to InitializeMiningBoostUpgrade for data:%#v", req.Data); err != nil {
+		switch {
+		case errors.Is(err, tokenomics.ErrRelationNotFound):
+			return nil, server.NotFound(err, userNotFoundErrorCode)
+		default:
+			return nil, server.Unexpected(err)
+		}
+	}
+
+	return server.OK(resp), nil
+}
+
+// FinalizeMiningBoostUpgrade godoc
+//
+//	@Schemes
+//	@Description	Finalizes the process to enable a new mining boost tier.
+//	@Tags			Tokenomics
+//	@Accept			json
+//	@Produce		json
+//	@Param			Authorization	header		string									true	"Insert your access token"	default(Bearer <Add access token here>)
+//	@Param			userId			path		string									true	"ID of the user"
+//	@Param			x_client_type	query		string									false	"the type of the client calling this API. I.E. `web`"
+//	@Param			request			body		FinalizeMiningBoostUpgradeRequestBody	true	"Request params"
+//	@Success		200				{object}	tokenomics.PendingMiningBoostUpgrade
+//	@Failure		400				{object}	server.ErrorResponse	"if validations fail"
+//	@Failure		401				{object}	server.ErrorResponse	"if not authorized"
+//	@Failure		403				{object}	server.ErrorResponse	"if not allowed"
+//	@Failure		404				{object}	server.ErrorResponse	"if user not found or process was not initialized"
+//	@Failure		422				{object}	server.ErrorResponse	"if syntax fails"
+//	@Failure		500				{object}	server.ErrorResponse
+//	@Failure		504				{object}	server.ErrorResponse	"if request times out"
+//	@Router			/tokenomics/{userId}/mining-boosts [PATCH].
+func (s *service) FinalizeMiningBoostUpgrade( //nolint:gocritic // False negative.
+	ctx context.Context,
+	req *server.Request[FinalizeMiningBoostUpgradeRequestBody, tokenomics.PendingMiningBoostUpgrade],
+) (*server.Response[tokenomics.PendingMiningBoostUpgrade], *server.Response[server.ErrorResponse]) {
+	resp, err := s.tokenomicsProcessor.FinalizeMiningBoostUpgrade(ctx, req.Data.Network, req.Data.TXHash, req.Data.UserID)
+	if err = errors.Wrapf(err, "failed to FinalizeMiningBoostUpgrade for data:%#v", req.Data); err != nil {
+		switch {
+		case errors.Is(err, tokenomics.ErrInvalidMiningBoostUpgradeTX):
+			return nil, server.BadRequest(err, invalidMiningBoostUpgradeTransactionErrorCode)
+		case errors.Is(err, tokenomics.ErrNotFound):
+			return nil, server.NotFound(err, noPendingMiningBoostUpgradeFoundErrorCode)
+		case errors.Is(err, tokenomics.ErrRelationNotFound):
+			return nil, server.NotFound(err, userNotFoundErrorCode)
+		default:
+			return nil, server.Unexpected(err)
+		}
+	}
+
+	return server.OK(resp), nil
 }
 
 // StartNewMiningSession godoc

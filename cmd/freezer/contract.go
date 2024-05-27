@@ -14,6 +14,9 @@ type (
 	GetMiningSummaryArg struct {
 		UserID string `uri:"userId" required:"true" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"`
 	}
+	GetMiningBoostSummaryArg struct {
+		UserID string `uri:"userId" required:"true" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"`
+	}
 	GetPreStakingSummaryArg struct {
 		UserID string `uri:"userId" required:"true" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"`
 	}
