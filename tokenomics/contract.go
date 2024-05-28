@@ -369,6 +369,7 @@ type (
 			networkEndpointCurrentLBIndex map[BlockchainNetworkType]*atomic.Uint64      `yaml:"-" mapstructure:"-" json:"-"`
 			networkClients                map[BlockchainNetworkType][]*ethclient.Client `yaml:"-" mapstructure:"-" json:"-"`
 			NetworkEndpoints              map[BlockchainNetworkType][]string            `yaml:"networkEndpoints" mapstructure:"networkEndpoints"`
+			ContractAddresses             map[BlockchainNetworkType]string              `yaml:"contractAddresses" mapstructure:"contractAddresses"`
 			Levels                        map[float64]*MiningBoostLevel                 `yaml:"levels" mapstructure:"levels"`
 			PaymentAddress                string                                        `yaml:"paymentAddress" mapstructure:"paymentAddress"`
 			paymentAddress                ethcommon.Address                             `yaml:"-" mapstructure:"-" json:"-"`

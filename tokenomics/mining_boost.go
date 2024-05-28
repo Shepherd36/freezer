@@ -12,13 +12,13 @@ import (
 	"sync/atomic"
 	stdlibtime "time"
 
+	ethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 
-	coindistribution "github.com/ice-blockchain/freezer/coin-distribution"
 	"github.com/ice-blockchain/freezer/model"
 	"github.com/ice-blockchain/wintr/connectors/storage/v3"
 	"github.com/ice-blockchain/wintr/log"
@@ -55,7 +55,7 @@ func (r *repository) GetMiningBoostSummary(ctx context.Context, userID string) (
 }
 
 func (r *repository) InitializeMiningBoostUpgrade(ctx context.Context, miningBoostLevelIndex uint8, userID string) (*PendingMiningBoostUpgrade, error) {
-	if miningBoostLevelIndex >= uint8(len(r.cfg.MiningBoost.Levels)-1) {
+	if miningBoostLevelIndex > uint8(len(r.cfg.MiningBoost.Levels)-1) {
 		return nil, errors.New("mining boost already at max level")
 	}
 	id, err := GetOrInitInternalID(ctx, r.db, userID)
@@ -219,6 +219,10 @@ func (r *repository) FinalizeMiningBoostUpgrade(ctx context.Context, network Blo
 	}, nil
 }
 
+const (
+	erc20ABI = `[{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]`
+)
+
 func (r *repository) getBurntAmountForMiningBoostUpgrade(ctx context.Context, network BlockchainNetworkType, txHash string) (float64, error) {
 	networkClient := r.cfg.MiningBoost.networkClients[network][r.cfg.MiningBoost.networkEndpointCurrentLBIndex[network].Add(1)%uint64(len(r.cfg.MiningBoost.networkClients[network]))] //nolint:lll // .
 
@@ -227,23 +231,29 @@ func (r *repository) getBurntAmountForMiningBoostUpgrade(ctx context.Context, ne
 		return 0, errors.Wrapf(err, "failed to get TransactionReceipt for tx: %v", txHash)
 	}
 
+	parsedABI, err := ethabi.JSON(strings.NewReader(erc20ABI))
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to parse erc 20 ABI for tx: %v", txHash)
+	}
+
 	for _, vLog := range receipt.Logs {
-		if event, evErr := coindistribution.SmartContractABI.EventByID(vLog.Topics[0]); evErr != nil {
+		if event, evErr := parsedABI.EventByID(vLog.Topics[0]); evErr != nil {
 			return 0, errors.Wrapf(evErr, "failed to get EventByID: %#v", vLog)
 		} else if event.Name != "Transfer" {
 			continue
 		}
 
-		var transferEvent struct {
-			Amount   *big.Int
-			From, To ethcommon.Address
+		if vLog.Address != ethcommon.HexToAddress(r.cfg.MiningBoost.ContractAddresses[network]) {
+			return 0, nil
 		}
-		if evErr := coindistribution.SmartContractABI.UnpackIntoInterface(&transferEvent, "Transfer", vLog.Data); evErr != nil {
+
+		var transferEvent struct{ Value *big.Int }
+		if evErr := parsedABI.UnpackIntoInterface(&transferEvent, "Transfer", vLog.Data); evErr != nil {
 			return 0, errors.Wrapf(evErr, "failed to get UnpackIntoInterface[%#v]: %#v", &transferEvent, vLog)
 		}
 
-		if transferEvent.To == r.cfg.MiningBoost.paymentAddress && transferEvent.Amount.Cmp(new(big.Int).SetUint64(0)) > 0 {
-			amount, _ := transferEvent.Amount.Float64()
+		if ethcommon.HexToAddress(vLog.Topics[2].Hex()) == r.cfg.MiningBoost.paymentAddress && transferEvent.Value.Cmp(new(big.Int).SetUint64(0)) > 0 {
+			amount, _ := transferEvent.Value.Float64()
 
 			return amount / iceFlakesDenomination, nil
 		}

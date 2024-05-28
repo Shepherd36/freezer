@@ -31,19 +31,33 @@ cmd/freezer-refrigerant:
   wintr/auth/ice:
     jwtSecret: bogus
 mining-boost: &mining-boost
+  contractAddresses:
+    ethereum: "0x79F05c263055BA20EE0e814ACD117C20CAA10e0c"
+    arbitrum: "0x0b2402144bb366a632d14b83f244d2e0e21bd39c"
+    bnb: "0xc335Df7C25b72eEC661d5Aa32a7c2B7b2a1D1874"
   networkEndpoints:
     ethereum:
-      - https://goerli.drpc.org
+      - https://ethereum-rpc.publicnode.com
     arbitrum:
-      - https://rinkeby.arbitrum.io/rpc
+      - https://arbitrum.llamarpc.com
     bnb:
-      - https://data-seed-prebsc-1-s1.binance.org:8545
-  paymentAddress: xxxxxxxx
+      - https://bsc-dataseed1.binance.org/
+  paymentAddress: "0x0000000000000000000000000000000000000000"
   levels:
     12.3:
       miningSessionLengthSeconds: 120
       miningRateBonus: 200
       maxT1Referrals: 10
+      slashingDisabled: true
+    13.3:
+      miningSessionLengthSeconds: 180
+      miningRateBonus: 300
+      maxT1Referrals: 20
+      slashingDisabled: true
+    14.3:
+      miningSessionLengthSeconds: 240
+      miningRateBonus: 400
+      maxT1Referrals: 30
       slashingDisabled: true
     10.3:
       miningSessionLengthSeconds: 60
