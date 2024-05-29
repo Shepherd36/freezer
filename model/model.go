@@ -370,6 +370,14 @@ type (
 	FlexibleBool    bool
 )
 
+func (ff *FlexibleFloat64) String() string {
+	if ff == nil {
+		return "<nil>"
+	}
+
+	return strconv.FormatFloat(float64(*ff), 'f', 32, 64)
+}
+
 func (ff *FlexibleFloat64) UnmarshalBinary(data []byte) error {
 	return ff.UnmarshalText(data)
 }
@@ -396,30 +404,46 @@ func (ff *FlexibleFloat64) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func (ff *FlexibleUint64) UnmarshalBinary(data []byte) error {
-	return ff.UnmarshalText(data)
+func (fu *FlexibleUint64) String() string {
+	if fu == nil {
+		return "<nil>"
+	}
+
+	return strconv.FormatUint(uint64(*fu), 10)
 }
 
-func (ff *FlexibleUint64) MarshalBinary() ([]byte, error) {
-	return ff.MarshalText()
+func (fu *FlexibleUint64) UnmarshalBinary(data []byte) error {
+	return fu.UnmarshalText(data)
 }
 
-func (ff *FlexibleUint64) MarshalText() ([]byte, error) {
-	if ff == nil {
+func (fu *FlexibleUint64) MarshalBinary() ([]byte, error) {
+	return fu.MarshalText()
+}
+
+func (fu *FlexibleUint64) MarshalText() ([]byte, error) {
+	if fu == nil {
 		return nil, nil
 	}
 
-	return []byte(strconv.FormatUint(uint64(*ff), 10)), nil
+	return []byte(strconv.FormatUint(uint64(*fu), 10)), nil
 }
 
-func (ff *FlexibleUint64) UnmarshalText(text []byte) error {
+func (fu *FlexibleUint64) UnmarshalText(text []byte) error {
 	val, err := strconv.ParseUint(string(text), 10, 64)
 	if err != nil {
 		return errors.Wrapf(err, "failed to ParseUint `%v`", text)
 	}
-	*ff = FlexibleUint64(val)
+	*fu = FlexibleUint64(val)
 
 	return nil
+}
+
+func (fb *FlexibleBool) String() string {
+	if fb == nil {
+		return "<nil>"
+	}
+
+	return strconv.FormatBool(bool(*fb))
 }
 
 func (fb *FlexibleBool) UnmarshalBinary(data []byte) error {

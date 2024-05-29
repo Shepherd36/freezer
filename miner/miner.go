@@ -5,6 +5,7 @@ package miner
 import (
 	"context"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -421,6 +422,9 @@ func (m *miner) mine(ctx context.Context, workerNumber int64) {
 			totalBalance := totalStandardBalance + totalPreStakingBalance
 			if shouldSynchronizeBalance {
 				userGlobalRanks = append(userGlobalRanks, balancesynchronizer.GlobalRank(usr.ID, totalBalance))
+				if math.IsNaN(totalStandardBalance) || math.IsNaN(totalPreStakingBalance) {
+					log.Info(fmt.Sprintf("bmr[%#v],before[%+v], after[%+v]", updatedUser.baseMiningRate(now), usr, updatedUser))
+				}
 				msgs = append(msgs, balancesynchronizer.BalanceUpdatedMessage(reqCtx, usr.UserID, totalStandardBalance, totalPreStakingBalance))
 			}
 		}
