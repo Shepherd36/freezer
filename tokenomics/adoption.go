@@ -129,7 +129,7 @@ func (c *Config) BaseMiningRate(now, createdAt *time.Time) float64 {
 }
 
 func BaseMiningRate(now, createdAt *time.Time, startingBaseMiningRate float64, milestones uint8, durationBetweenMilestones stdlibtime.Duration) float64 {
-	if createdAt.IsNil() || createdAt.Equal(*now.Time) || createdAt.After(*now.Time){
+	if createdAt.IsNil() || createdAt.Equal(*now.Time) || createdAt.After(*now.Time) {
 		return startingBaseMiningRate
 	}
 
