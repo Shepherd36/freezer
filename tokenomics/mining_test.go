@@ -21,19 +21,19 @@ func TestRepositoryCalculateMiningSession(t *testing.T) {
 	now := time.Now()
 	start := time.New(now.Add(-1 * stdlibtime.Second))
 	end := time.New(now.Add(repo.cfg.MiningSessionDuration.Max).Add(-1 * stdlibtime.Second))
-	actual := repo.calculateMiningSession(now, start, end)
+	actual := repo.calculateMiningSession(now, start, end, repo.cfg.MiningSessionDuration.Max)
 	assert.EqualValues(t, start, actual.StartedAt)
 	assert.False(t, *actual.Free)
 
 	start = time.New(now.Add(-1 - repo.cfg.MiningSessionDuration.Min))
 	end = time.New(now.Add(repo.cfg.MiningSessionDuration.Max).Add(-1 - repo.cfg.MiningSessionDuration.Min))
-	actual = repo.calculateMiningSession(now, start, end)
+	actual = repo.calculateMiningSession(now, start, end, repo.cfg.MiningSessionDuration.Max)
 	assert.EqualValues(t, start, actual.StartedAt)
 	assert.False(t, *actual.Free)
 
 	start = time.New(now.Add(-1 - repo.cfg.MiningSessionDuration.Max))
 	end = time.New(now.Add(repo.cfg.MiningSessionDuration.Max).Add(repo.cfg.MiningSessionDuration.Min).Add(-1 - repo.cfg.MiningSessionDuration.Max))
-	actual = repo.calculateMiningSession(now, start, end)
+	actual = repo.calculateMiningSession(now, start, end, repo.cfg.MiningSessionDuration.Max)
 	assert.EqualValues(t, time.New(start.Add(repo.cfg.MiningSessionDuration.Max)), actual.StartedAt)
 	assert.True(t, *actual.Free)
 }

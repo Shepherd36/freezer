@@ -5,14 +5,39 @@ logger:
   encoder: console
   level: debug
 tokenomics:
+  adoption:
+    milestones: 7
+    startingBaseMiningRate: 16
+    durationBetweenMilestones: 168h
   miningSessionDuration:
     max: 24h
   extraBonuses:
     duration: 24h
+  mining-boost:
+    levels:
+      12.3:
+        miningSessionLengthSeconds: 120
+        miningRateBonus: 200
+        maxT1Referrals: 10
+        slashingDisabled: true
+      13.3:
+        miningSessionLengthSeconds: 180
+        miningRateBonus: 300
+        maxT1Referrals: 20
+        slashingDisabled: true
+      14.3:
+        miningSessionLengthSeconds: 240
+        miningRateBonus: 400
+        maxT1Referrals: 30
+        slashingDisabled: true
+      10.3:
+        miningSessionLengthSeconds: 60
+        miningRateBonus: 100
+        maxT1Referrals: 5
+        slashingDisabled: false
 miner:
   ethereumDistributionFrequency:
     min: 24h
     max: 672h
-  slashingStartInterval: 168h
   slashingDaysCount: 10
   t1LimitCount: 2
