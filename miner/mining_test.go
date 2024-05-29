@@ -93,6 +93,8 @@ func testSoloMiningNoExtraBonus(t *testing.T) {
 		m := newUser()
 		m.ActiveT1Referrals = 4
 		ref := newRef()
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, nil, ref)
 		require.NotNil(t, m)
@@ -109,6 +111,8 @@ func testSoloMiningNoExtraBonus(t *testing.T) {
 		m.ActiveT1Referrals = 4
 		ref := newRef()
 		tMinus1Ref := newRef()
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, ref, tMinus1Ref)
 		require.NotNil(t, m)
@@ -147,6 +151,8 @@ func testSoloMiningNoExtraBonus(t *testing.T) {
 		m.ActiveT2Referrals = 20
 		ref := newRef()
 		tMinus1Ref := newRef()
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, ref, tMinus1Ref)
 		require.NotNil(t, m)
@@ -228,6 +234,8 @@ func testSoloMiningWithExtraBonus(t *testing.T) {
 		m.ActiveT1Referrals = 4
 		m.ExtraBonusStartedAt = timeDelta(stdlibtime.Hour)
 		m.ExtraBonus = 100
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, nil, nil)
 		require.NotNil(t, m)
@@ -247,6 +255,8 @@ func testSoloMiningWithExtraBonus(t *testing.T) {
 		m.ActiveT1Referrals = 4
 		m.ExtraBonusStartedAt = timeDelta(stdlibtime.Hour)
 		m.ExtraBonus = 100
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, ref, nil)
 		require.NotNil(t, m)
@@ -288,6 +298,8 @@ func testSoloMiningWithExtraBonus(t *testing.T) {
 		m.ExtraBonus = 100
 		m.ActiveT1Referrals = 4
 		m.ActiveT2Referrals = 20
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, ref, refMinus)
 		require.NotNil(t, m)
@@ -348,6 +360,8 @@ func testSoloMiningWithPreStaking(t *testing.T) {
 		m.PreStakingBonus = 200
 		m.PreStakingAllocation = 50
 		ref := newRef()
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, nil, ref)
 		require.NotNil(t, m)
@@ -366,6 +380,8 @@ func testSoloMiningWithPreStaking(t *testing.T) {
 		m.ActiveT1Referrals = 4
 		m.PreStakingBonus = 200
 		m.PreStakingAllocation = 50
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, nil, nil)
 		require.NotNil(t, m)
@@ -385,6 +401,8 @@ func testSoloMiningWithPreStaking(t *testing.T) {
 		m.PreStakingBonus = 200
 		m.PreStakingAllocation = 50
 		ref := newRef()
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, ref, nil)
 		require.NotNil(t, m)
@@ -405,6 +423,8 @@ func testSoloMiningWithPreStaking(t *testing.T) {
 		m.ActiveT2Referrals = 20
 		m.PreStakingBonus = 200
 		m.PreStakingAllocation = 50
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, nil, nil)
 		require.NotNil(t, m)
@@ -426,6 +446,8 @@ func testSoloMiningWithPreStaking(t *testing.T) {
 		m.ActiveT2Referrals = 20
 		ref := newRef()
 		refMinus := newRef()
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, ref, refMinus)
 		require.NotNil(t, m)
@@ -492,6 +514,8 @@ func testSoloMiningWithPreStakingAndExtraBonus(t *testing.T) {
 		m.ExtraBonus = 100
 		m.ExtraBonusStartedAt = timeDelta(stdlibtime.Hour)
 		ref := newRef()
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, nil, ref)
 		require.NotNil(t, m)
@@ -512,6 +536,8 @@ func testSoloMiningWithPreStakingAndExtraBonus(t *testing.T) {
 		m.PreStakingAllocation = 50
 		m.ExtraBonus = 100
 		m.ExtraBonusStartedAt = timeDelta(stdlibtime.Hour)
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, nil, nil)
 		require.NotNil(t, m)
@@ -533,6 +559,8 @@ func testSoloMiningWithPreStakingAndExtraBonus(t *testing.T) {
 		m.ExtraBonus = 100
 		m.ExtraBonusStartedAt = timeDelta(stdlibtime.Hour)
 		ref := newRef()
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, ref, nil)
 		require.NotNil(t, m)
@@ -555,6 +583,8 @@ func testSoloMiningWithPreStakingAndExtraBonus(t *testing.T) {
 		m.PreStakingAllocation = 50
 		m.ExtraBonus = 100
 		m.ExtraBonusStartedAt = timeDelta(stdlibtime.Hour)
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, nil, nil)
 		require.NotNil(t, m)
@@ -578,6 +608,8 @@ func testSoloMiningWithPreStakingAndExtraBonus(t *testing.T) {
 		m.ActiveT2Referrals = 20
 		ref := newRef()
 		refMinus := newRef()
+		slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+		m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 		m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(testTime, m, ref, refMinus)
 		require.NotNil(t, m)
@@ -1562,6 +1594,8 @@ func testMinerTier1Limit_0(t *testing.T) {
 	m.IDT0 = testIDT0
 	m.IDTMinus1 = testIDTMinus1
 	m.ActiveT1Referrals = 0
+	slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+	m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 	m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(time.New(testTime.Add(-2*stdlibtime.Hour)), m, nil, nil)
 	require.NotNil(t, m)
@@ -1592,6 +1626,8 @@ func testMinerTier1Limit_1(t *testing.T) {
 	m.IDT0 = testIDT0
 	m.IDTMinus1 = testIDTMinus1
 	m.ActiveT1Referrals = 1
+	slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+	m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 	m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(time.New(testTime.Add(-2*stdlibtime.Hour)), m, nil, nil)
 	require.NotNil(t, m)
@@ -1622,6 +1658,8 @@ func testMinerTier1Limit_2(t *testing.T) {
 	m.IDT0 = testIDT0
 	m.IDTMinus1 = testIDTMinus1
 	m.ActiveT1Referrals = 2
+	slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+	m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 	m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(time.New(testTime.Add(-2*stdlibtime.Hour)), m, nil, nil)
 	require.NotNil(t, m)
@@ -1652,6 +1690,8 @@ func testMinerTier1Limit_1000(t *testing.T) {
 	m.IDT0 = testIDT0
 	m.IDTMinus1 = testIDTMinus1
 	m.ActiveT1Referrals = 1000
+	slashingDisabledMiningBoostIx := model.FlexibleUint64(2)
+	m.MiningBoostLevelIndex = &slashingDisabledMiningBoostIx
 
 	m, _, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(time.New(testTime.Add(-2*stdlibtime.Hour)), m, nil, nil)
 	require.NotNil(t, m)

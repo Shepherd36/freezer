@@ -129,5 +129,9 @@ func (c *Config) BaseMiningRate(now, createdAt *time.Time) float64 {
 }
 
 func BaseMiningRate(now, createdAt *time.Time, startingBaseMiningRate float64, milestones uint8, durationBetweenMilestones stdlibtime.Duration) float64 {
+	if createdAt.IsNil() {
+		return startingBaseMiningRate
+	}
+
 	return startingBaseMiningRate / (math.Pow(2, math.Min(float64(milestones), float64(now.Sub(*createdAt.Time)/durationBetweenMilestones))))
 }

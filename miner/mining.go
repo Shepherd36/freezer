@@ -3,6 +3,8 @@
 package miner
 
 import (
+	"math"
+
 	"github.com/ice-blockchain/freezer/tokenomics"
 	"github.com/ice-blockchain/wintr/time"
 )
@@ -125,9 +127,9 @@ func mine(now *time.Time, usr *user, t0Ref, tMinus1Ref *referral) (updatedUser *
 		if updatedUser.ActiveT2Referrals < 0 {
 			updatedUser.ActiveT2Referrals = 0
 		}
-		activeT1Referrals := updatedUser.ActiveT1Referrals
-		if cfg.T1LimitCount != 0 && activeT1Referrals > cfg.T1LimitCount {
-			activeT1Referrals = cfg.T1LimitCount
+		activeT1Referrals := int32(0)
+		if updatedUser.MiningBoostLevelIndex != nil {
+			activeT1Referrals = int32(math.Min(float64((*cfg.miningBoostLevels.Load())[int(*updatedUser.MiningBoostLevelIndex)].MaxT1Referrals), float64(updatedUser.ActiveT1Referrals)))
 		}
 		t1Rate := (25 * float64(activeT1Referrals)) * baseMiningRate * elapsedTimeFraction / 100
 		t2Rate := (5 * float64(updatedUser.ActiveT2Referrals)) * baseMiningRate * elapsedTimeFraction / 100

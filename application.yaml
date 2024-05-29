@@ -31,6 +31,32 @@ cmd/freezer-refrigerant:
   wintr/auth/ice:
     jwtSecret: bogus
 mining-boost: &mining-boost
+  levels:
+    1.0:
+      miningSessionLengthSeconds: 60
+      miningRateBonus: 25
+      maxT1Referrals: 5
+      slashingDisabled: false
+    2.0:
+      miningSessionLengthSeconds: 60
+      miningRateBonus: 50
+      maxT1Referrals: 10
+      slashingDisabled: false
+    3.0:
+      miningSessionLengthSeconds: 60
+      miningRateBonus: 75
+      maxT1Referrals: 15
+      slashingDisabled: false
+    4.0:
+      miningSessionLengthSeconds: 120
+      miningRateBonus: 125
+      maxT1Referrals: 20
+      slashingDisabled: false
+    5.0:
+      miningSessionLengthSeconds: 120
+      miningRateBonus: 200
+      maxT1Referrals: 25
+      slashingDisabled: true
   contractAddresses:
     ethereum: "0x79F05c263055BA20EE0e814ACD117C20CAA10e0c"
     arbitrum: "0x0b2402144bb366a632d14b83f244d2e0e21bd39c"
@@ -43,28 +69,12 @@ mining-boost: &mining-boost
     bnb:
       - https://bsc-dataseed1.binance.org/
   paymentAddress: "0x0000000000000000000000000000000000000000"
-  levels:
-    12.3:
-      miningSessionLengthSeconds: 120
-      miningRateBonus: 200
-      maxT1Referrals: 10
-      slashingDisabled: true
-    13.3:
-      miningSessionLengthSeconds: 180
-      miningRateBonus: 300
-      maxT1Referrals: 20
-      slashingDisabled: true
-    14.3:
-      miningSessionLengthSeconds: 240
-      miningRateBonus: 400
-      maxT1Referrals: 30
-      slashingDisabled: true
-    10.3:
-      miningSessionLengthSeconds: 60
-      miningRateBonus: 100
-      maxT1Referrals: 5
-      slashingDisabled: false
 tokenomics: &tokenomics
+  slashingFloor: 5
+  adoption:
+    startingBaseMiningRate: 16
+    milestones: 7
+    durationBetweenMilestones: 3m
   blockchain-coin-stats-json-url: https://ice-staging.b-cdn.net/assets/auth-config.json
   kyc:
     try-reset-kyc-steps-url: https://something.example.com

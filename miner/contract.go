@@ -207,7 +207,6 @@ type (
 		Workers                                 int64   `yaml:"workers"`
 		BatchSize                               int64   `yaml:"batchSize"`
 		SlashingDaysCount                       int64   `yaml:"slashingDaysCount"`
-		T1LimitCount                            int32   `yaml:"t1LimitCount"`
 		Development                             bool    `yaml:"development"`
 	}
 )

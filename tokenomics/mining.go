@@ -219,12 +219,16 @@ func (r *repository) GetMiningSummary(ctx context.Context, userID string) (*Mini
 	}
 	slashingIsOff := (ms[0].BalanceSolo+ms[0].BalanceT0+ms[0].BalanceT1+ms[0].BalanceT2) <= r.cfg.SlashingFloor || (ms[0].MiningBoostLevelIndex != nil && (*r.cfg.MiningBoost.levels.Load())[*ms[0].MiningBoostLevelIndex].SlashingDisabled)
 	maxMiningSessionDuration := r.cfg.maxMiningSessionDuration(ms[0].MiningBoostLevelIndexField)
+	activeT1Referrals := int32(0)
+	if ms[0].MiningBoostLevelIndex != nil {
+		activeT1Referrals = int32(math.Min(float64((*r.cfg.MiningBoost.levels.Load())[int(*ms[0].MiningBoostLevelIndex)].MaxT1Referrals), float64(ms[0].ActiveT1Referrals)))
+	}
 
 	return &MiningSummary{
 		MiningStreak:                r.calculateMiningStreak(now, ms[0].MiningSessionSoloStartedAt, ms[0].MiningSessionSoloEndedAt),
 		MiningSession:               r.calculateMiningSession(now, ms[0].MiningSessionSoloLastStartedAt, ms[0].MiningSessionSoloEndedAt, maxMiningSessionDuration),
 		RemainingFreeMiningSessions: r.calculateRemainingFreeMiningSessions(now, ms[0].MiningSessionSoloLastStartedAt, ms[0].MiningSessionSoloEndedAt, maxMiningSessionDuration),
-		MiningRates:                 r.calculateMiningRateSummaries(t0, extraBonus, ms[0].PreStakingAllocation, ms[0].PreStakingBonus, ms[0].ActiveT1Referrals, t2, r.cfg.BaseMiningRate(now, ms[0].CreatedAt), negativeMiningRate, ms[0].BalanceTotalStandard+ms[0].BalanceTotalPreStaking, now, ms[0].MiningSessionSoloEndedAt, slashingIsOff), //nolint:lll // .
+		MiningRates:                 r.calculateMiningRateSummaries(t0, extraBonus, ms[0].PreStakingAllocation, ms[0].PreStakingBonus, activeT1Referrals, t2, r.cfg.BaseMiningRate(now, ms[0].CreatedAt), negativeMiningRate, ms[0].BalanceTotalStandard+ms[0].BalanceTotalPreStaking, now, ms[0].MiningSessionSoloEndedAt, slashingIsOff), //nolint:lll // .
 		ExtraBonusSummary:           ExtraBonusSummary{AvailableExtraBonus: extraBonus},
 		MiningStarted:               !ms[0].MiningSessionSoloStartedAt.IsNil(),
 		KYCStepBlocked:              ms[0].KYCStepBlocked,
@@ -293,9 +297,7 @@ func (r *repository) calculateMiningRateSummaries(
 	if t1 < 0 {
 		t1 = 0
 	}
-	if r.cfg.T1LimitCount != 0 && t1 > r.cfg.T1LimitCount {
-		t1 = r.cfg.T1LimitCount
-	}
+
 	if t2 < 0 {
 		t2 = 0
 	}

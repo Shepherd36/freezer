@@ -18,26 +18,25 @@ tokenomics:
       12.3:
         miningSessionLengthSeconds: 120
         miningRateBonus: 200
-        maxT1Referrals: 10
+        maxT1Referrals: 2
         slashingDisabled: true
       13.3:
         miningSessionLengthSeconds: 180
         miningRateBonus: 300
-        maxT1Referrals: 20
-        slashingDisabled: true
+        maxT1Referrals: 2
+        slashingDisabled: false
       14.3:
         miningSessionLengthSeconds: 240
         miningRateBonus: 400
-        maxT1Referrals: 30
+        maxT1Referrals: 4
         slashingDisabled: true
       10.3:
         miningSessionLengthSeconds: 60
         miningRateBonus: 100
-        maxT1Referrals: 5
+        maxT1Referrals: 1
         slashingDisabled: false
 miner:
   ethereumDistributionFrequency:
     min: 24h
     max: 672h
   slashingDaysCount: 10
-  t1LimitCount: 2
