@@ -221,11 +221,12 @@ func (r *repository) GetMiningSummary(ctx context.Context, userID string) (*Mini
 		t2 = ms[0].ActiveT2Referrals
 	}
 	slashingIsOff := (ms[0].BalanceSolo+ms[0].BalanceT0+ms[0].BalanceT1+ms[0].BalanceT2) <= r.cfg.SlashingFloor || (ms[0].MiningBoostLevelIndex != nil && (*r.cfg.MiningBoost.levels.Load())[*ms[0].MiningBoostLevelIndex].SlashingDisabled)
+	maxMiningSessionDuration := r.cfg.maxMiningSessionDuration(ms[0].MiningBoostLevelIndexField)
 
 	return &MiningSummary{
 		MiningStreak:                r.calculateMiningStreak(now, ms[0].MiningSessionSoloStartedAt, ms[0].MiningSessionSoloEndedAt),
-		MiningSession:               r.calculateMiningSession(now, ms[0].MiningSessionSoloLastStartedAt, ms[0].MiningSessionSoloEndedAt),
-		RemainingFreeMiningSessions: r.calculateRemainingFreeMiningSessions(now, ms[0].MiningSessionSoloEndedAt),
+		MiningSession:               r.calculateMiningSession(now, ms[0].MiningSessionSoloLastStartedAt, ms[0].MiningSessionSoloEndedAt, maxMiningSessionDuration),
+		RemainingFreeMiningSessions: r.calculateRemainingFreeMiningSessions(now, ms[0].MiningSessionSoloLastStartedAt, ms[0].MiningSessionSoloEndedAt, maxMiningSessionDuration),
 		MiningRates:                 r.calculateMiningRateSummaries(t0, extraBonus, ms[0].PreStakingAllocation, ms[0].PreStakingBonus, ms[0].ActiveT1Referrals, t2, currentAdoption.BaseMiningRate, negativeMiningRate, ms[0].BalanceTotalStandard+ms[0].BalanceTotalPreStaking, now, ms[0].MiningSessionSoloEndedAt, slashingIsOff), //nolint:lll // .
 		ExtraBonusSummary:           ExtraBonusSummary{AvailableExtraBonus: extraBonus},
 		MiningStarted:               !ms[0].MiningSessionSoloStartedAt.IsNil(),
@@ -250,10 +251,10 @@ func (r *repository) isT0Online(ctx context.Context, idT0 int64, now *time.Time)
 	return 0, errors.Wrapf(err, "failed to get MiningSessionSoloEndedAtField for idT0:%v", idT0)
 }
 
-func (r *repository) calculateMiningSession(now, start, end *time.Time) (ms *MiningSession) {
-	if ms = CalculateMiningSession(now, start, end, r.cfg.MiningSessionDuration.Max); ms != nil {
+func (r *repository) calculateMiningSession(now, start, end *time.Time, maxMiningSessionDuration stdlibtime.Duration) (ms *MiningSession) {
+	if ms = CalculateMiningSession(now, start, end, maxMiningSessionDuration); ms != nil {
 		ms.ResettableStartingAt = time.New(ms.StartedAt.Add(r.cfg.MiningSessionDuration.Min))
-		ms.WarnAboutExpirationStartingAt = time.New(ms.StartedAt.Add(r.cfg.MiningSessionDuration.WarnAboutExpirationAfter))
+		ms.WarnAboutExpirationStartingAt = time.New(ms.StartedAt.Add(maxMiningSessionDuration - r.cfg.MiningSessionDuration.Max).Add(r.cfg.MiningSessionDuration.WarnAboutExpirationAfter))
 	}
 
 	return ms
@@ -481,10 +482,28 @@ func (r *repository) calculateMiningStreak(now, start, end *time.Time) uint64 {
 	return model.CalculateMiningStreak(now, start, end, r.cfg.MiningSessionDuration.Max)
 }
 
-func (r *repository) calculateRemainingFreeMiningSessions(now, end *time.Time) uint64 {
+func (r *repository) calculateRemainingFreeMiningSessions(now, start, end *time.Time, maxMiningSession stdlibtime.Duration) uint64 {
 	if end.IsNil() || now.After(*end.Time) {
 		return 0
 	}
 
+	if maxMiningSession > r.cfg.MiningSessionDuration.Max {
+		latestMiningSession := r.calculateMiningSession(now, start, end, maxMiningSession)
+
+		if latestMiningSession == nil || end.Before(*latestMiningSession.EndedAt.Time) {
+			return 0
+		}
+
+		return uint64(end.Sub(*latestMiningSession.EndedAt.Time) / r.cfg.MiningSessionDuration.Max)
+	}
+
 	return uint64(end.Sub(*now.Time) / r.cfg.MiningSessionDuration.Max)
+}
+
+func (c *Config) maxMiningSessionDuration(ix model.MiningBoostLevelIndexField) stdlibtime.Duration {
+	if ix.MiningBoostLevelIndex == nil {
+		return c.MiningSessionDuration.Max
+	}
+
+	return stdlibtime.Duration((*c.MiningBoost.levels.Load())[int(*ix.MiningBoostLevelIndex)].MiningSessionLengthSeconds) * stdlibtime.Second
 }

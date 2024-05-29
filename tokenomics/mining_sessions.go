@@ -22,6 +22,7 @@ import (
 
 type (
 	StartOrExtendMiningSession struct {
+		model.MiningBoostLevelIndexField
 		model.ResurrectSoloUsedAtField
 		model.MiningSessionSoloLastStartedAtField
 		model.MiningSessionSoloStartedAtField
@@ -209,7 +210,9 @@ func (r *repository) newStartOrExtendMiningSession(old *StartOrExtendMiningSessi
 	resp := new(StartOrExtendMiningSession)
 	resp.MiningSessionSoloStartedAt = now
 	resp.MiningSessionSoloLastStartedAt = now
-	resp.MiningSessionSoloEndedAt = time.New(now.Add(r.cfg.MiningSessionDuration.Max))
+	maxMiningSessionDuration := r.cfg.maxMiningSessionDuration(old.MiningBoostLevelIndexField)
+	resp.MiningSessionSoloEndedAt = time.New(now.Add(maxMiningSessionDuration))
+	old.MiningBoostLevelIndex = nil
 	resp.MiningSessionSoloPreviouslyEndedAt = old.MiningSessionSoloEndedAt
 	resp.MiningSessionSoloDayOffLastAwardedAt = new(time.Time)
 	if old.MiningSessionSoloEndedAt.IsNil() || old.MiningSessionSoloEndedAt.Before(*now.Time) {
@@ -217,7 +220,7 @@ func (r *repository) newStartOrExtendMiningSession(old *StartOrExtendMiningSessi
 	}
 
 	if old.MiningSessionSoloEndedAt.IsNil() || old.MiningSessionSoloStartedAt.IsNil() || old.MiningSessionSoloEndedAt.Before(*now.Time) {
-		return resp, r.cfg.MiningSessionDuration.Max
+		return resp, maxMiningSessionDuration
 	}
 	resp.MiningSessionSoloPreviouslyEndedAt, resp.MiningSessionSoloStartedAt, resp.MiningSessionSoloDayOffLastAwardedAt = nil, nil, nil
 	var durationSinceLastFreeMiningSessionAwarded stdlibtime.Duration
@@ -232,7 +235,7 @@ func (r *repository) newStartOrExtendMiningSession(old *StartOrExtendMiningSessi
 		resp.MiningSessionSoloDayOffLastAwardedAt = now
 		freeMiningSession++
 	}
-	if freeSessions := stdlibtime.Duration(r.calculateRemainingFreeMiningSessions(now, old.MiningSessionSoloEndedAt) + freeMiningSession); freeSessions > 0 {
+	if freeSessions := stdlibtime.Duration(r.calculateRemainingFreeMiningSessions(now, old.MiningSessionSoloLastStartedAt, old.MiningSessionSoloEndedAt, maxMiningSessionDuration) + freeMiningSession); freeSessions > 0 {
 		resp.MiningSessionSoloEndedAt = time.New(resp.MiningSessionSoloEndedAt.Add(freeSessions * r.cfg.MiningSessionDuration.Max))
 	}
 
