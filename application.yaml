@@ -49,12 +49,12 @@ mining-boost: &mining-boost
       slashingDisabled: false
     4.0:
       miningSessionLengthSeconds: 120
-      miningRateBonus: 125
+      miningRateBonus: 100
       maxT1Referrals: 20
       slashingDisabled: false
     5.0:
       miningSessionLengthSeconds: 120
-      miningRateBonus: 200
+      miningRateBonus: 125
       maxT1Referrals: 25
       slashingDisabled: true
   contractAddresses:
