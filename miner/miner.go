@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -36,6 +37,22 @@ func init() {
 	cfg.disableAdvancedTeam = new(atomic.Pointer[[]string])
 	cfg.coinDistributionCollectorSettings = new(atomic.Pointer[coindistribution.CollectorSettings])
 	cfg.coinDistributionCollectorStartedAt = new(atomic.Pointer[time.Time])
+	cfg.miningBoostLevels = new(atomic.Pointer[[]*tokenomics.MiningBoostLevel])
+
+	levels := make([]*tokenomics.MiningBoostLevel, 0, len(cfg.MiningBoost.Levels))
+	for dollars, level := range cfg.MiningBoost.Levels {
+		level.ICEPrice = strconv.FormatFloat(dollars, 'f', 15, 64)
+		levels = append(levels, level)
+	}
+	sort.SliceStable(levels, func(ii, jj int) bool {
+		iiPrice, err := strconv.ParseFloat(levels[ii].ICEPrice, 64)
+		log.Panic(err)
+		jjPrice, err := strconv.ParseFloat(levels[jj].ICEPrice, 64)
+		log.Panic(err)
+
+		return iiPrice < jjPrice
+	})
+	cfg.miningBoostLevels.Store(&levels)
 }
 
 func MustStartMining(ctx context.Context, cancel context.CancelFunc) Client {

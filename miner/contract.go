@@ -58,6 +58,7 @@ type (
 		model.MiningSessionSoloPreviouslyEndedAtField
 		model.ExtraBonusStartedAtField
 		model.ReferralsCountChangeGuardUpdatedAtField
+		model.MiningBoostLevelIndexField
 		model.KYCState
 		model.MiningBlockchainAccountAddressField
 		model.CountryField
@@ -133,6 +134,7 @@ type (
 
 	referral struct {
 		model.KYCState
+		model.MiningBoostLevelIndexField
 		model.MiningSessionSoloStartedAtField
 		model.MiningSessionSoloEndedAtField
 		model.MiningSessionSoloPreviouslyEndedAtField
@@ -145,6 +147,10 @@ type (
 		model.IDT0Field
 		model.DeserializedUsersKey
 		model.BalanceTotalStandardField
+		model.BalanceSoloField
+		model.BalanceT0Field
+		model.BalanceT1Field
+		model.BalanceT2Field
 		model.BalanceSoloEthereumField
 		model.BalanceT0EthereumField
 		model.BalanceT1EthereumField
@@ -186,6 +192,7 @@ type (
 		extraBonusIndicesDistribution               map[uint16]map[uint16]uint16
 	}
 	config struct {
+		miningBoostLevels                       *atomic.Pointer[[]*tokenomics.MiningBoostLevel]
 		disableAdvancedTeam                     *atomic.Pointer[[]string]
 		coinDistributionCollectorStartedAt      *atomic.Pointer[time.Time]
 		coinDistributionCollectorSettings       *atomic.Pointer[coindistribution.CollectorSettings]
@@ -195,12 +202,11 @@ type (
 			Min stdlibtime.Duration `yaml:"min"`
 			Max stdlibtime.Duration `yaml:"max"`
 		} `yaml:"ethereumDistributionFrequency" mapstructure:"ethereumDistributionFrequency"`
-		SlashingStartInterval                   stdlibtime.Duration `yaml:"slashingStartInterval"`
-		MainnetRewardPoolContributionPercentage float64             `yaml:"mainnetRewardPoolContributionPercentage" mapstructure:"mainnetRewardPoolContributionPercentage"`
-		Workers                                 int64               `yaml:"workers"`
-		BatchSize                               int64               `yaml:"batchSize"`
-		SlashingDaysCount                       int64               `yaml:"slashingDaysCount"`
-		T1LimitCount                            int32               `yaml:"t1LimitCount"`
-		Development                             bool                `yaml:"development"`
+		MainnetRewardPoolContributionPercentage float64 `yaml:"mainnetRewardPoolContributionPercentage" mapstructure:"mainnetRewardPoolContributionPercentage"`
+		Workers                                 int64   `yaml:"workers"`
+		BatchSize                               int64   `yaml:"batchSize"`
+		SlashingDaysCount                       int64   `yaml:"slashingDaysCount"`
+		T1LimitCount                            int32   `yaml:"t1LimitCount"`
+		Development                             bool    `yaml:"development"`
 	}
 )

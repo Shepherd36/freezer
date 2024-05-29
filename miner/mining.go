@@ -35,6 +35,14 @@ func mine(baseMiningRate float64, now *time.Time, usr *user, t0Ref, tMinus1Ref *
 
 		return nil, false, IDT0Changed, 0, 0
 	}
+	if updatedUser.MiningSessionSoloEndedAt.Before(*now.Time) && (updatedUser.reachedSlashingFloor() || updatedUser.slashingDisabled()) {
+		shouldGenerateHistory = (updatedUser.BalanceLastUpdatedAt.Year() != now.Year() ||
+			updatedUser.BalanceLastUpdatedAt.YearDay() != now.YearDay() ||
+			(cfg.Development && updatedUser.BalanceLastUpdatedAt.Minute() != now.Minute())) &&
+			now.Sub(*updatedUser.BalanceLastUpdatedAt.Time) < cfg.MiningSessionDuration.Min*3
+
+		return nil, shouldGenerateHistory, IDT0Changed, 0, 0
+	}
 
 	if updatedUser.BalanceLastUpdatedAt.IsNil() {
 		updatedUser.BalanceLastUpdatedAt = updatedUser.MiningSessionSoloStartedAt
@@ -45,9 +53,6 @@ func mine(baseMiningRate float64, now *time.Time, usr *user, t0Ref, tMinus1Ref *
 			shouldGenerateHistory = true
 			updatedUser.BalanceTotalSlashed = 0
 			updatedUser.BalanceTotalMinted = 0
-			if updatedUser.MiningSessionSoloEndedAt.After(*now.Time) && updatedUser.isAbsoluteZero() {
-				usr.BalanceLastUpdatedAt = updatedUser.MiningSessionSoloStartedAt
-			}
 		}
 		if updatedUser.MiningSessionSoloEndedAt.After(*now.Time) && updatedUser.isAbsoluteZero() {
 			updatedUser.BalanceLastUpdatedAt = updatedUser.MiningSessionSoloStartedAt
@@ -130,7 +135,7 @@ func mine(baseMiningRate float64, now *time.Time, usr *user, t0Ref, tMinus1Ref *
 		mintedAmount += t1Rate + t2Rate
 
 	} else {
-		if now.Sub(*updatedUser.MiningSessionSoloEndedAt.Time) >= cfg.SlashingStartInterval {
+		if !updatedUser.slashingDisabled() {
 			if updatedUser.SlashingRateSolo == 0 {
 				updatedUser.SlashingRateSolo = updatedUser.BalanceSolo / float64(cfg.SlashingDaysCount) / miningSessionRatio
 			}
@@ -143,20 +148,16 @@ func mine(baseMiningRate float64, now *time.Time, usr *user, t0Ref, tMinus1Ref *
 		}
 	}
 
-	if t0Ref != nil &&
-		((!t0Ref.MiningSessionSoloEndedAt.IsNil() && t0Ref.MiningSessionSoloEndedAt.Before(*now.Time) && t0Ref.MiningSessionSoloEndedAt.Sub(*now.Time) >= cfg.SlashingStartInterval) ||
-			(updatedUser.MiningSessionSoloEndedAt.Before(*now.Time) && now.Sub(*updatedUser.MiningSessionSoloEndedAt.Time) >= cfg.SlashingStartInterval)) {
-		if updatedUser.SlashingRateForT0 == 0 {
+	if t0Ref != nil {
+		if updatedUser.SlashingRateForT0 == 0 && !t0Ref.MiningSessionSoloEndedAt.IsNil() && t0Ref.MiningSessionSoloEndedAt.Before(*now.Time) && !t0Ref.slashingDisabled() && !t0Ref.reachedSlashingFloor() {
 			updatedUser.SlashingRateForT0 = updatedUser.BalanceForT0 / float64(cfg.SlashingDaysCount) / miningSessionRatio
 		}
-		if updatedUser.SlashingRateT0 == 0 {
+		if updatedUser.SlashingRateT0 == 0 && !updatedUser.MiningSessionSoloEndedAt.IsNil() && updatedUser.MiningSessionSoloEndedAt.Before(*now.Time) && !updatedUser.slashingDisabled() && !updatedUser.reachedSlashingFloor() {
 			updatedUser.SlashingRateT0 = updatedUser.BalanceT0 / float64(cfg.SlashingDaysCount) / miningSessionRatio
 		}
 	}
-	if tMinus1Ref != nil &&
-		((!tMinus1Ref.MiningSessionSoloEndedAt.IsNil() && tMinus1Ref.MiningSessionSoloEndedAt.Before(*now.Time) && tMinus1Ref.MiningSessionSoloEndedAt.Sub(*now.Time) > cfg.SlashingStartInterval) ||
-			(updatedUser.MiningSessionSoloEndedAt.Before(*now.Time) && now.Sub(*updatedUser.MiningSessionSoloEndedAt.Time) >= cfg.SlashingStartInterval)) {
-		if updatedUser.SlashingRateForTMinus1 == 0 {
+	if tMinus1Ref != nil {
+		if updatedUser.SlashingRateForTMinus1 == 0 && !tMinus1Ref.MiningSessionSoloEndedAt.IsNil() && tMinus1Ref.MiningSessionSoloEndedAt.Before(*now.Time) && !tMinus1Ref.slashingDisabled() && !tMinus1Ref.reachedSlashingFloor() {
 			updatedUser.SlashingRateForTMinus1 = updatedUser.BalanceForTMinus1 / float64(cfg.SlashingDaysCount) / miningSessionRatio
 		}
 	}
@@ -249,4 +250,28 @@ func (u *user) isAbsoluteZero() bool {
 		u.BalanceSoloPending-u.BalanceSoloPendingApplied == 0 &&
 		u.BalanceForT0 == 0 &&
 		u.BalanceForTMinus1 == 0
+}
+
+func (u *user) reachedSlashingFloor() bool {
+	return (u.BalanceSolo + u.BalanceT0 + u.BalanceT1 + u.BalanceT2) <= cfg.SlashingFloor
+}
+
+func (ref *referral) reachedSlashingFloor() bool {
+	return (ref.BalanceSolo + ref.BalanceT0 + ref.BalanceT1 + ref.BalanceT2) <= cfg.SlashingFloor
+}
+
+func (u *user) slashingDisabled() bool {
+	if u == nil || u.MiningBoostLevelIndex == nil {
+		return false
+	}
+
+	return (*cfg.miningBoostLevels.Load())[*u.MiningBoostLevelIndex].SlashingDisabled
+}
+
+func (ref *referral) slashingDisabled() bool {
+	if ref == nil || ref.MiningBoostLevelIndex == nil {
+		return false
+	}
+
+	return (*cfg.miningBoostLevels.Load())[*ref.MiningBoostLevelIndex].SlashingDisabled
 }

@@ -167,6 +167,7 @@ func (r *repository) GetMiningSummary(ctx context.Context, userID string) (*Mini
 	now := time.Now()
 	ms, err := storage.Get[struct {
 		model.MiningSessionSoloPreviouslyEndedAtField
+		model.MiningBoostLevelIndexField
 		model.MiningSessionSoloLastStartedAtField
 		model.MiningSessionSoloStartedAtField
 		model.MiningSessionSoloEndedAtField
@@ -174,6 +175,10 @@ func (r *repository) GetMiningSummary(ctx context.Context, userID string) (*Mini
 		model.ExtraBonusLastClaimAvailableAtField
 		model.LatestDeviceField
 		model.UserIDField
+		model.BalanceSoloField
+		model.BalanceT0Field
+		model.BalanceT1Field
+		model.BalanceT2Field
 		model.BalanceTotalStandardField
 		model.BalanceTotalPreStakingField
 		model.SlashingRateSoloField
@@ -215,12 +220,13 @@ func (r *repository) GetMiningSummary(ctx context.Context, userID string) (*Mini
 	if r.isAdvancedTeamEnabled(ms[0].LatestDevice) {
 		t2 = ms[0].ActiveT2Referrals
 	}
+	slashingIsOff := (ms[0].BalanceSolo+ms[0].BalanceT0+ms[0].BalanceT1+ms[0].BalanceT2) <= r.cfg.SlashingFloor || (ms[0].MiningBoostLevelIndex != nil && (*r.cfg.MiningBoost.levels.Load())[*ms[0].MiningBoostLevelIndex].SlashingDisabled)
 
 	return &MiningSummary{
 		MiningStreak:                r.calculateMiningStreak(now, ms[0].MiningSessionSoloStartedAt, ms[0].MiningSessionSoloEndedAt),
 		MiningSession:               r.calculateMiningSession(now, ms[0].MiningSessionSoloLastStartedAt, ms[0].MiningSessionSoloEndedAt),
 		RemainingFreeMiningSessions: r.calculateRemainingFreeMiningSessions(now, ms[0].MiningSessionSoloEndedAt),
-		MiningRates:                 r.calculateMiningRateSummaries(t0, extraBonus, ms[0].PreStakingAllocation, ms[0].PreStakingBonus, ms[0].ActiveT1Referrals, t2, currentAdoption.BaseMiningRate, negativeMiningRate, ms[0].BalanceTotalStandard+ms[0].BalanceTotalPreStaking, now, ms[0].MiningSessionSoloEndedAt), //nolint:lll // .
+		MiningRates:                 r.calculateMiningRateSummaries(t0, extraBonus, ms[0].PreStakingAllocation, ms[0].PreStakingBonus, ms[0].ActiveT1Referrals, t2, currentAdoption.BaseMiningRate, negativeMiningRate, ms[0].BalanceTotalStandard+ms[0].BalanceTotalPreStaking, now, ms[0].MiningSessionSoloEndedAt, slashingIsOff), //nolint:lll // .
 		ExtraBonusSummary:           ExtraBonusSummary{AvailableExtraBonus: extraBonus},
 		MiningStarted:               !ms[0].MiningSessionSoloStartedAt.IsNil(),
 		KYCStepBlocked:              ms[0].KYCStepBlocked,
@@ -273,6 +279,7 @@ func (r *repository) calculateMiningRateSummaries(
 	t1, t2 int32,
 	baseMiningRate, negativeMiningRate, totalBalance float64,
 	now, miningSessionSoloEndedAt *time.Time,
+	slashingIsOff bool,
 ) (miningRates *MiningRates[*MiningRateSummary[string]]) {
 	miningRates = new(MiningRates[*MiningRateSummary[string]])
 	var (
@@ -312,7 +319,7 @@ func (r *repository) calculateMiningRateSummaries(
 		miningRates.Type = NoneMiningRateType
 	} else if miningSessionSoloEndedAt.After(*now.Time) {
 		miningRates.Type = PositiveMiningRateType
-	} else if totalBalance <= 0.0 {
+	} else if totalBalance <= 0.0 || slashingIsOff {
 		miningRates.Type = NoneMiningRateType
 	} else {
 		extraBonus, t0, t1, t2 = 0, 0, 0, 0

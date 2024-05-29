@@ -45,7 +45,7 @@ func TestRepository_CalculateMiningRateSummaries(t *testing.T) { //nolint:funlen
 		now                  = time.Now()
 		endedAt              = time.New(now.Add(stdlibtime.Second))
 	)
-	actual := rep.calculateMiningRateSummaries(t0, extraBonus, preStakingAllocation, preStakingBonus, t1, t2, baseMiningRate, negativeMiningRate, totalBalance, now, endedAt)
+	actual := rep.calculateMiningRateSummaries(t0, extraBonus, preStakingAllocation, preStakingBonus, t1, t2, baseMiningRate, negativeMiningRate, totalBalance, now, endedAt, false)
 	assert.EqualValues(t, &MiningRates[*MiningRateSummary[string]]{ //nolint:dupl // Intended.
 		Type: PositiveMiningRateType,
 		Base: &MiningRateSummary[string]{
@@ -104,7 +104,7 @@ func TestRepository_CalculateMiningRateSummaries(t *testing.T) { //nolint:funlen
 	}, actual)
 	preStakingBonus = 500
 	preStakingAllocation = 10
-	actual = rep.calculateMiningRateSummaries(t0, extraBonus, preStakingAllocation, preStakingBonus, t1, t2, baseMiningRate, negativeMiningRate, totalBalance, now, endedAt)
+	actual = rep.calculateMiningRateSummaries(t0, extraBonus, preStakingAllocation, preStakingBonus, t1, t2, baseMiningRate, negativeMiningRate, totalBalance, now, endedAt, false)
 	assert.EqualValues(t, &MiningRates[*MiningRateSummary[string]]{ //nolint:dupl // Intended.
 		Type: PositiveMiningRateType,
 		Base: &MiningRateSummary[string]{
@@ -163,7 +163,7 @@ func TestRepository_CalculateMiningRateSummaries(t *testing.T) { //nolint:funlen
 	}, actual)
 	preStakingBonus = 100
 	preStakingAllocation = 100
-	actual = rep.calculateMiningRateSummaries(t0, extraBonus, preStakingAllocation, preStakingBonus, t1, t2, baseMiningRate, negativeMiningRate, totalBalance, now, endedAt)
+	actual = rep.calculateMiningRateSummaries(t0, extraBonus, preStakingAllocation, preStakingBonus, t1, t2, baseMiningRate, negativeMiningRate, totalBalance, now, endedAt, false)
 	assert.EqualValues(t, &MiningRates[*MiningRateSummary[string]]{ //nolint:dupl // Wrong.
 		Type: PositiveMiningRateType,
 		Base: &MiningRateSummary[string]{
@@ -212,7 +212,7 @@ func TestRepository_CalculateMiningRateSummaries(t *testing.T) { //nolint:funlen
 	}, actual)
 	preStakingBonus = 0
 	preStakingAllocation = 0
-	actual = rep.calculateMiningRateSummaries(t0, extraBonus, preStakingAllocation, preStakingBonus, t1, t2, baseMiningRate, negativeMiningRate, totalBalance, now, endedAt)
+	actual = rep.calculateMiningRateSummaries(t0, extraBonus, preStakingAllocation, preStakingBonus, t1, t2, baseMiningRate, negativeMiningRate, totalBalance, now, endedAt, false)
 	assert.EqualValues(t, &MiningRates[*MiningRateSummary[string]]{ //nolint:dupl // Wrong.
 		Type: PositiveMiningRateType,
 		Base: &MiningRateSummary[string]{
@@ -263,7 +263,7 @@ func TestRepository_CalculateMiningRateSummaries(t *testing.T) { //nolint:funlen
 	preStakingBonus = 500
 	preStakingAllocation = 10
 	endedAt = now
-	actual = rep.calculateMiningRateSummaries(t0, extraBonus, preStakingAllocation, preStakingBonus, t1, t2, baseMiningRate, negativeMiningRate, totalBalance, now, endedAt)
+	actual = rep.calculateMiningRateSummaries(t0, extraBonus, preStakingAllocation, preStakingBonus, t1, t2, baseMiningRate, negativeMiningRate, totalBalance, now, endedAt, false)
 	assert.EqualValues(t, &MiningRates[*MiningRateSummary[string]]{ //nolint:dupl // Wrong.
 		Type: NoneMiningRateType,
 		Base: &MiningRateSummary[string]{
@@ -321,7 +321,7 @@ func TestRepository_CalculateMiningRateSummaries(t *testing.T) { //nolint:funlen
 		},
 	}, actual)
 	totalBalance = 1.0
-	actual = rep.calculateMiningRateSummaries(t0, extraBonus, preStakingAllocation, preStakingBonus, t1, t2, baseMiningRate, negativeMiningRate, totalBalance, now, endedAt)
+	actual = rep.calculateMiningRateSummaries(t0, extraBonus, preStakingAllocation, preStakingBonus, t1, t2, baseMiningRate, negativeMiningRate, totalBalance, now, endedAt, false)
 	assert.EqualValues(t, &MiningRates[*MiningRateSummary[string]]{ //nolint:dupl // Wrong.
 		Type: NegativeMiningRateType,
 		Base: &MiningRateSummary[string]{

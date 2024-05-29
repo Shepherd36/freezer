@@ -424,6 +424,7 @@ type (
 			T1 uint32 `yaml:"t1"`
 			T2 uint32 `yaml:"t2"`
 		} `yaml:"referralBonusMiningRates"`
-		T1LimitCount int32 `yaml:"t1LimitCount"`
+		SlashingFloor float64 `yaml:"slashingFloor" mapstructure:"slashingFloor"`
+		T1LimitCount  int32   `yaml:"t1LimitCount"`
 	}
 )
