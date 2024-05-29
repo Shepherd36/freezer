@@ -225,7 +225,7 @@ type (
 		GetMiningSummary(ctx context.Context, userID string) (*MiningSummary, error)
 		GetPreStakingSummary(ctx context.Context, userID string) (*PreStakingSummary, error)
 		GetBalanceHistory(ctx context.Context, userID string, start, end *time.Time, utcOffset stdlibtime.Duration, limit, offset uint64) ([]*BalanceHistoryEntry, error) //nolint:lll // .
-		GetAdoptionSummary(context.Context) (*AdoptionSummary, error)
+		GetAdoptionSummary(ctx context.Context, userID string) (*AdoptionSummary, error)
 	}
 	WriteRepository interface {
 		StartNewMiningSession(ctx context.Context, ms *MiningSummary, rollbackNegativeMiningProgress *bool, skipKYCSteps []users.KYCStep) error
@@ -376,14 +376,11 @@ type (
 		} `yaml:"mining-boost" mapstructure:"mining-boost"`
 		BlockchainCoinStatsJSONURL          string `yaml:"blockchain-coin-stats-json-url" mapstructure:"blockchain-coin-stats-json-url"`
 		extrabonusnotifier.ExtraBonusConfig `mapstructure:",squash"`
-		AdoptionMilestoneSwitch             struct {
-			ActiveUserMilestones []struct {
-				Users          uint64  `yaml:"users"`
-				BaseMiningRate float64 `yaml:"baseMiningRate"`
-			} `yaml:"activeUserMilestones"`
-			ConsecutiveDurationsRequired uint64              `yaml:"consecutiveDurationsRequired"`
-			Duration                     stdlibtime.Duration `yaml:"duration"`
-		} `yaml:"adoptionMilestoneSwitch"`
+		Adoption                            struct {
+			StartingBaseMiningRate    float64             `yaml:"startingBaseMiningRate" mapstructure:"startingBaseMiningRate"`
+			DurationBetweenMilestones stdlibtime.Duration `yaml:"durationBetweenMilestones" mapstructure:"durationBetweenMilestones"`
+			Milestones                uint8               `yaml:"milestones" mapstructure:"milestones"`
+		} `yaml:"adoption"`
 		messagebroker.Config `mapstructure:",squash"`
 		KYC                  struct {
 			RequireQuizOnlyOnSpecificDayOfWeek *int                `yaml:"require-quiz-only-on-specific-day-of-week" mapstructure:"require-quiz-only-on-specific-day-of-week"` //nolint:lll // .

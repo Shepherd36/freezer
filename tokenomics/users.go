@@ -166,6 +166,7 @@ func (s *usersTableSource) replaceUser(ctx context.Context, usr *users.User) err
 	}
 	type (
 		LocalUser struct {
+			model.CreatedAtField
 			model.KYCStepsCreatedAtField
 			model.KYCStepsLastUpdatedAtField
 			model.UserIDField
@@ -196,6 +197,7 @@ func (s *usersTableSource) replaceUser(ctx context.Context, usr *users.User) err
 	}
 	newPartialState := new(LocalUser)
 	newPartialState.ID = internalID
+	newPartialState.CreatedAt = usr.CreatedAt
 	newPartialState.ProfilePictureName = s.pictureClient.StripDownloadURL(usr.ProfilePictureURL)
 	newPartialState.Username = usr.Username
 	newPartialState.Country = usr.Country
@@ -222,6 +224,7 @@ func (s *usersTableSource) replaceUser(ctx context.Context, usr *users.User) err
 		newPartialState.MiningBlockchainAccountAddress != dbUser[0].MiningBlockchainAccountAddress ||
 		newPartialState.BlockchainAccountAddress != dbUser[0].BlockchainAccountAddress ||
 		newPartialState.HideRanking != dbUser[0].HideRanking ||
+		!newPartialState.CreatedAt.Equal(*dbUser[0].CreatedAt.Time) ||
 		!newPartialState.KYCStepsCreatedAt.Equals(dbUser[0].KYCStepsCreatedAt) ||
 		!newPartialState.KYCStepsLastUpdatedAt.Equals(dbUser[0].KYCStepsLastUpdatedAt) ||
 		newPartialState.KYCStepBlocked != dbUser[0].KYCStepBlocked ||

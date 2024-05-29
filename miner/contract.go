@@ -52,6 +52,7 @@ var (
 
 type (
 	user struct {
+		model.CreatedAtField
 		model.MiningSessionSoloLastStartedAtField
 		model.MiningSessionSoloStartedAtField
 		model.MiningSessionSoloEndedAtField

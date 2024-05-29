@@ -306,7 +306,6 @@ func (s *completedTasksSource) Process(ctx context.Context, message *messagebrok
 			).ErrorOrNil()
 		}
 	}()
-	adoption, err := GetCurrentAdoption(ctx, s.db)
 	if err != nil {
 		return errors.Wrap(err, "failed to getCurrentAdoption")
 	}
@@ -314,7 +313,15 @@ func (s *completedTasksSource) Process(ctx context.Context, message *messagebrok
 	if err != nil {
 		return errors.Wrapf(err, "failed to getOrInitInternalID for userID:%v", val.UserID)
 	}
-	prize := adoption.BaseMiningRate * adoptionMultiplicationFactor
+	res, err := storage.Get[struct{ model.CreatedAtField }](ctx, s.db, model.SerializedUsersKey(id))
+	if err != nil || len(res) == 0 {
+		if err == nil {
+			err = errors.Wrapf(ErrRelationNotFound, "missing state for id:%v", id)
+		}
+
+		return errors.Wrapf(err, "failed to get GetAdoptionSummary for id:%v", id)
+	}
+	prize := s.cfg.BaseMiningRate(time.Now(), res[0].CreatedAt) * adoptionMultiplicationFactor
 
 	return errors.Wrapf(s.db.HIncrByFloat(ctx, model.SerializedUsersKey(id), "balance_solo_pending", prize).Err(),
 		"failed to incr balance_solo_pending for userID:%v by %v", val.UserID, prize)

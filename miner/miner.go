@@ -156,7 +156,6 @@ func (m *miner) mine(ctx context.Context, workerNumber int64) {
 		totalBatches                                                         uint64
 		iteration                                                            uint64
 		now, lastIterationStartedAt                                          = time.Now(), time.Now()
-		currentAdoption                                                      = m.getAdoption(ctx, m.db, workerNumber)
 		workers                                                              = cfg.Workers
 		batchSize                                                            = cfg.BatchSize
 		userKeys, userHistoryKeys, referralKeys, syncQuizUserIDs             = make([]string, 0, batchSize), make([]string, 0, batchSize), make([]string, 0, 2*batchSize), make([]string, 0, batchSize)
@@ -212,9 +211,6 @@ func (m *miner) mine(ctx context.Context, workerNumber int64) {
 			go m.telemetry.collectElapsed(1, *now.Time)
 		}
 		now = time.Now()
-		if batchNumber == 0 || currentAdoption == nil {
-			currentAdoption = m.getAdoption(ctx, m.db, workerNumber)
-		}
 		userKeys, userHistoryKeys, referralKeys = userKeys[:0], userHistoryKeys[:0], referralKeys[:0]
 		userResults, referralResults = userResults[:0], referralResults[:0]
 		syncQuizUserIDs = syncQuizUserIDs[:0]
@@ -362,7 +358,7 @@ func (m *miner) mine(ctx context.Context, workerNumber int64) {
 			if isAdvancedTeamDisabled(usr.LatestDevice) {
 				usr.ActiveT2Referrals = 0
 			}
-			updatedUser, shouldGenerateHistory, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(currentAdoption.BaseMiningRate, now, usr, t0Ref, tMinus1Ref)
+			updatedUser, shouldGenerateHistory, IDT0Changed, pendingAmountForTMinus1, pendingAmountForT0 := mine(now, usr, t0Ref, tMinus1Ref)
 			if shouldGenerateHistory {
 				syncQuizUserIDs = append(syncQuizUserIDs, usr.UserID)
 				userHistoryKeys = append(userHistoryKeys, usr.Key())
@@ -671,17 +667,6 @@ func (m *miner) mine(ctx context.Context, workerNumber int64) {
 		reqCancel()
 		resetVars(true)
 	}
-}
-
-func (m *miner) getAdoption(ctx context.Context, db storage.DB, workerNumber int64) (currentAdoption *tokenomics.Adoption[float64]) {
-	for err := errors.New("init"); ctx.Err() == nil && err != nil; {
-		reqCtx, reqCancel := context.WithTimeout(context.Background(), requestDeadline)
-		currentAdoption, err = tokenomics.GetCurrentAdoption(reqCtx, db)
-		reqCancel()
-		log.Error(errors.Wrapf(err, "[miner] failed to GetCurrentAdoption for workerNumber:%v", workerNumber))
-	}
-
-	return currentAdoption
 }
 
 func (m *miner) startDisableAdvancedTeamCfgSyncer(ctx context.Context) {

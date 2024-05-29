@@ -83,7 +83,7 @@ func (s *service) GetAdoption( //nolint:gocritic // False negative.
 	ctx context.Context,
 	req *server.Request[GetAdoptionArg, tokenomics.AdoptionSummary],
 ) (*server.Response[tokenomics.AdoptionSummary], *server.Response[server.ErrorResponse]) {
-	resp, err := s.tokenomicsRepository.GetAdoptionSummary(ctx)
+	resp, err := s.tokenomicsRepository.GetAdoptionSummary(ctx, req.AuthenticatedUser.UserID)
 	if err != nil {
 		return nil, server.Unexpected(errors.Wrapf(err, "failed to get adoption summary for userID:%v", req.AuthenticatedUser.UserID))
 	}

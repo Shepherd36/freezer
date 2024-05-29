@@ -7,7 +7,7 @@ import (
 	"github.com/ice-blockchain/wintr/time"
 )
 
-func mine(baseMiningRate float64, now *time.Time, usr *user, t0Ref, tMinus1Ref *referral) (updatedUser *user, shouldGenerateHistory, IDT0Changed bool, pendingAmountForTMinus1, pendingAmountForT0 float64) {
+func mine(now *time.Time, usr *user, t0Ref, tMinus1Ref *referral) (updatedUser *user, shouldGenerateHistory, IDT0Changed bool, pendingAmountForTMinus1, pendingAmountForT0 float64) {
 	if usr == nil || usr.MiningSessionSoloStartedAt.IsNil() || usr.MiningSessionSoloEndedAt.IsNil() {
 		return nil, false, false, 0, 0
 	}
@@ -91,6 +91,7 @@ func mine(baseMiningRate float64, now *time.Time, usr *user, t0Ref, tMinus1Ref *
 		updatedUser.BalanceT2PendingApplied = 0
 	}
 
+	baseMiningRate := updatedUser.baseMiningRate(now)
 	if updatedUser.MiningSessionSoloEndedAt.After(*now.Time) {
 		if !updatedUser.ExtraBonusStartedAt.IsNil() && now.Before(updatedUser.ExtraBonusStartedAt.Add(cfg.ExtraBonuses.Duration)) {
 			rate := (100 + float64(updatedUser.ExtraBonus)) * baseMiningRate * elapsedTimeFraction / 100.
@@ -274,4 +275,12 @@ func (ref *referral) slashingDisabled() bool {
 	}
 
 	return (*cfg.miningBoostLevels.Load())[*ref.MiningBoostLevelIndex].SlashingDisabled
+}
+
+func (u *user) baseMiningRate(now *time.Time) float64 {
+	if u == nil {
+		return 0
+	}
+
+	return cfg.BaseMiningRate(now, u.CreatedAt)
 }

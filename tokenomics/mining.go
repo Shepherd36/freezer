@@ -166,6 +166,7 @@ func (r *repository) GetMiningSummary(ctx context.Context, userID string) (*Mini
 	}
 	now := time.Now()
 	ms, err := storage.Get[struct {
+		model.CreatedAtField
 		model.MiningSessionSoloPreviouslyEndedAtField
 		model.MiningBoostLevelIndexField
 		model.MiningSessionSoloLastStartedAtField
@@ -203,10 +204,6 @@ func (r *repository) GetMiningSummary(ctx context.Context, userID string) (*Mini
 
 		return nil, errors.Wrapf(err, "failed to get miningSummary for id:%v", id)
 	}
-	currentAdoption, err := GetCurrentAdoption(ctx, r.db)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to getCurrentAdoption")
-	}
 	t0, err := r.isT0Online(ctx, ms[0].IDT0, now)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to check if t0 is online for idT0:%v", ms[0].IDT0)
@@ -227,7 +224,7 @@ func (r *repository) GetMiningSummary(ctx context.Context, userID string) (*Mini
 		MiningStreak:                r.calculateMiningStreak(now, ms[0].MiningSessionSoloStartedAt, ms[0].MiningSessionSoloEndedAt),
 		MiningSession:               r.calculateMiningSession(now, ms[0].MiningSessionSoloLastStartedAt, ms[0].MiningSessionSoloEndedAt, maxMiningSessionDuration),
 		RemainingFreeMiningSessions: r.calculateRemainingFreeMiningSessions(now, ms[0].MiningSessionSoloLastStartedAt, ms[0].MiningSessionSoloEndedAt, maxMiningSessionDuration),
-		MiningRates:                 r.calculateMiningRateSummaries(t0, extraBonus, ms[0].PreStakingAllocation, ms[0].PreStakingBonus, ms[0].ActiveT1Referrals, t2, currentAdoption.BaseMiningRate, negativeMiningRate, ms[0].BalanceTotalStandard+ms[0].BalanceTotalPreStaking, now, ms[0].MiningSessionSoloEndedAt, slashingIsOff), //nolint:lll // .
+		MiningRates:                 r.calculateMiningRateSummaries(t0, extraBonus, ms[0].PreStakingAllocation, ms[0].PreStakingBonus, ms[0].ActiveT1Referrals, t2, r.cfg.BaseMiningRate(now, ms[0].CreatedAt), negativeMiningRate, ms[0].BalanceTotalStandard+ms[0].BalanceTotalPreStaking, now, ms[0].MiningSessionSoloEndedAt, slashingIsOff), //nolint:lll // .
 		ExtraBonusSummary:           ExtraBonusSummary{AvailableExtraBonus: extraBonus},
 		MiningStarted:               !ms[0].MiningSessionSoloStartedAt.IsNil(),
 		KYCStepBlocked:              ms[0].KYCStepBlocked,

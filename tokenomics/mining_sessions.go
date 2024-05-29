@@ -273,7 +273,6 @@ func (s *miningSessionsTableSource) Process(ctx context.Context, msg *messagebro
 	return multierror.Append( //nolint:wrapcheck // Not needed.
 		errors.Wrapf(s.incrementTotalActiveUsers(ctx, ms), "failed to incrementTotalActiveUsers for %#v", ms),
 		errors.Wrapf(s.incrementActiveReferralCountForT0AndTMinus1(ctx, ms), "failed to incrementActiveReferralCountForT0AndTMinus1 for %#v", ms),
-		errors.Wrapf(s.trySwitchToNextAdoption(ctx), "failed to trySwitchToNextAdoption"),
 	).ErrorOrNil()
 }
 

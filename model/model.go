@@ -325,6 +325,9 @@ type (
 	HideRankingField struct {
 		HideRanking bool `redis:"hide_ranking"`
 	}
+	CreatedAtField struct {
+		CreatedAt *time.Time `json:"createdAt" redis:"created_at"`
+	}
 	KYCStepsCreatedAtField struct {
 		KYCStepsCreatedAt *TimeSlice `json:"kycStepsCreatedAt" redis:"kyc_steps_created_at"`
 	}

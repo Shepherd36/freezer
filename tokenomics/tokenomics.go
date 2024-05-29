@@ -93,7 +93,8 @@ func StartProcessor(ctx context.Context, cancel context.CancelFunc) Processor {
 	log.Info(fmt.Sprintf("configuration loaded[livenessLoadDistributionStartDate]: %#v", prc.livenessLoadDistributionStartDate))
 	log.Info(fmt.Sprintf("configuration loaded[FaceRecognitionDelay]: %#v", cfg.KYC.FaceRecognitionDelay))
 	log.Info(fmt.Sprintf("configuration loaded[LivenessDelay]: %#v", cfg.KYC.LivenessDelay))
-	log.Info(fmt.Sprintf("configuration loaded[AdoptionMilestoneSwitch]: %#v", cfg.AdoptionMilestoneSwitch))
+	log.Info(fmt.Sprintf("configuration loaded[Adoption]: %#v", cfg.Adoption))
+	log.Info(fmt.Sprintf("configuration loaded[MiningBoost]: %#v", cfg.MiningBoost))
 	log.Info(fmt.Sprintf("configuration loaded[ExtraBonuses]: %#v", cfg.ExtraBonuses))
 	log.Info(fmt.Sprintf("configuration loaded[RollbackNegativeMining]: %#v", cfg.RollbackNegativeMining))
 	log.Info(fmt.Sprintf("configuration loaded[MiningSessionDuration]: %#v", cfg.MiningSessionDuration))
@@ -307,22 +308,6 @@ func isWebClientType(ctx context.Context) bool {
 	clientType, _ := ctx.Value(clientTypeCtxValueKey).(string) //nolint:errcheck // Not needed.
 
 	return strings.EqualFold(strings.TrimSpace(clientType), "web")
-}
-
-func (c *Config) totalActiveUsersAggregationIntervalDateFormat() string {
-	const hoursInADay = 24
-	switch c.AdoptionMilestoneSwitch.Duration { //nolint:exhaustive // We don't care about the others.
-	case stdlibtime.Minute:
-		return minuteFormat
-	case stdlibtime.Hour:
-		return hourFormat
-	case hoursInADay * stdlibtime.Hour:
-		return dayFormat
-	default:
-		log.Panic(fmt.Sprintf("invalid interval: %v", c.AdoptionMilestoneSwitch.Duration))
-
-		return ""
-	}
 }
 
 func (c *Config) globalAggregationIntervalChildDateFormat() string {
