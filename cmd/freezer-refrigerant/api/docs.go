@@ -20,7 +20,719 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/getCoinDistributionsForReview": {
+        "/v1r/tokenomics-statistics/adoption": {
+            "get": {
+                "description": "Returns the current adoption information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Statistics"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tokenomics.AdoptionSummary"
+                        }
+                    },
+                    "401": {
+                        "description": "if not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "if syntax fails",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "504": {
+                        "description": "if request times out",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1r/tokenomics-statistics/top-miners": {
+            "get": {
+                "description": "Returns the paginated leaderboard with top miners.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Statistics"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "a keyword to look for in the user's username or firstname/lastname",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "max number of elements to return. Default is ` + "`" + `10` + "`" + `.",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "number of elements to skip before starting to fetch data",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/tokenomics.Miner"
+                            }
+                        },
+                        "headers": {
+                            "X-Next-Offset": {
+                                "type": "integer",
+                                "description": "if this value is 0, pagination stops, if not, use it in the ` + "`" + `offset` + "`" + ` query param for the next call. "
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "if validations fail",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "if not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "if syntax fails",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "504": {
+                        "description": "if request times out",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1r/tokenomics-statistics/total-coins": {
+            "get": {
+                "description": "Returns statistics about total coins, with an usecase breakdown.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Statistics"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "number of days in the past to look for. Defaults to 3. Max is 90.",
+                        "name": "days",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Timezone in format +04:30 or -03:45",
+                        "name": "tz",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tokenomics.TotalCoinsSummary"
+                        }
+                    },
+                    "400": {
+                        "description": "if validations failed",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "if not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "if syntax fails",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "504": {
+                        "description": "if request times out",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1r/tokenomics/{userId}/balance-history": {
+            "get": {
+                "description": "Returns the balance history for the provided params.\nIf ` + "`" + `startDate` + "`" + ` is after ` + "`" + `endDate` + "`" + `, we go backwards in time: I.E. today, yesterday, etc.\nIf ` + "`" + `startDate` + "`" + ` is before ` + "`" + `endDate` + "`" + `, we go forwards in time: I.E. today, tomorrow, etc.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tokenomics"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of the user",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The start date in RFC3339 or ISO8601 formats. Default is ` + "`" + `now` + "`" + ` in UTC.",
+                        "name": "startDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The start date in RFC3339 or ISO8601 formats. Default is ` + "`" + `end of day, relative to startDate` + "`" + `.",
+                        "name": "endDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The user's timezone. I.E. ` + "`" + `+03:00` + "`" + `, ` + "`" + `-1:30` + "`" + `. Default is UTC.",
+                        "name": "tz",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "max number of elements to return. Default is ` + "`" + `24` + "`" + `.",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "number of elements to skip before starting to fetch data",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/tokenomics.BalanceHistoryEntry"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "if validations fail",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "if not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "if not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "if syntax fails",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "504": {
+                        "description": "if request times out",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1r/tokenomics/{userId}/balance-summary": {
+            "get": {
+                "description": "Returns the balance related information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tokenomics"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of the user",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tokenomics.BalanceSummary"
+                        }
+                    },
+                    "400": {
+                        "description": "if validations fail",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "if not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "if not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "if syntax fails",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "504": {
+                        "description": "if request times out",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1r/tokenomics/{userId}/mining-boost-summary": {
+            "get": {
+                "description": "Returns the mining boost related information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tokenomics"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of the user",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tokenomics.MiningBoostSummary"
+                        }
+                    },
+                    "400": {
+                        "description": "if validations fail",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "if not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "if not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "if not found",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "if syntax fails",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "504": {
+                        "description": "if request times out",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1r/tokenomics/{userId}/mining-summary": {
+            "get": {
+                "description": "Returns the mining related information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tokenomics"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of the user",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tokenomics.MiningSummary"
+                        }
+                    },
+                    "400": {
+                        "description": "if validations fail",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "if not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "if not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "if not found",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "if syntax fails",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "504": {
+                        "description": "if request times out",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1r/tokenomics/{userId}/pre-staking-summary": {
+            "get": {
+                "description": "Returns the pre-staking related information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tokenomics"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of the user",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tokenomics.PreStakingSummary"
+                        }
+                    },
+                    "400": {
+                        "description": "if validations fail",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "if not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "if not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "if not found",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "if syntax fails",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "504": {
+                        "description": "if request times out",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1r/tokenomics/{userId}/ranking-summary": {
+            "get": {
+                "description": "Returns the ranking related information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tokenomics"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003cAdd access token here\u003e",
+                        "description": "Insert your access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of the user",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tokenomics.RankingSummary"
+                        }
+                    },
+                    "400": {
+                        "description": "if validations fail",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "if not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "if hidden by the user",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "if syntax fails",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "504": {
+                        "description": "if request times out",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1w/getCoinDistributionsForReview": {
             "post": {
                 "description": "Fetches data of pending coin distributions for review.",
                 "consumes": [
@@ -154,7 +866,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/reviewDistributions": {
+        "/v1w/reviewDistributions": {
             "post": {
                 "description": "Reviews Coin Distributions.",
                 "consumes": [
@@ -231,7 +943,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/tokenomics/{userId}/extra-bonus-claims": {
+        "/v1w/tokenomics/{userId}/extra-bonus-claims": {
             "post": {
                 "description": "Claims an extra bonus for the user.",
                 "consumes": [
@@ -318,7 +1030,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/tokenomics/{userId}/mining-boosts": {
+        "/v1w/tokenomics/{userId}/mining-boosts": {
             "put": {
                 "description": "Initializes the process to enable a new mining boost tier.",
                 "consumes": [
@@ -508,7 +1220,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/tokenomics/{userId}/mining-sessions": {
+        "/v1w/tokenomics/{userId}/mining-sessions": {
             "post": {
                 "description": "Starts a new mining session for the user, if not already in progress with another one.",
                 "consumes": [
@@ -610,7 +1322,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/tokenomics/{userId}/pre-staking": {
+        "/v1w/tokenomics/{userId}/pre-staking": {
             "put": {
                 "description": "Starts or updates pre-staking for the user.",
                 "consumes": [
@@ -842,6 +1554,130 @@ const docTemplate = `{
                 }
             }
         },
+        "tokenomics.AdoptionSummary": {
+            "type": "object",
+            "properties": {
+                "milestones": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "achievedAt": {
+                                "type": "string",
+                                "example": "2022-01-03T16:20:52.156534Z"
+                            },
+                            "baseMiningRate": {
+                                "type": "string",
+                                "example": "1,243.02"
+                            },
+                            "milestone": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "totalActiveUsers": {
+                                "type": "integer",
+                                "example": 1
+                            }
+                        }
+                    }
+                },
+                "totalActiveUsers": {
+                    "type": "integer",
+                    "example": 11
+                }
+            }
+        },
+        "tokenomics.BalanceHistoryBalanceDiff": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string",
+                    "example": "1,243.02"
+                },
+                "bonus": {
+                    "type": "number",
+                    "example": 120
+                },
+                "negative": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "tokenomics.BalanceHistoryEntry": {
+            "type": "object",
+            "properties": {
+                "balance": {
+                    "$ref": "#/definitions/tokenomics.BalanceHistoryBalanceDiff"
+                },
+                "time": {
+                    "type": "string",
+                    "example": "2022-01-03T16:20:52.156534Z"
+                },
+                "timeSeries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/tokenomics.BalanceHistoryEntry"
+                    }
+                }
+            }
+        },
+        "tokenomics.BalanceSummary": {
+            "type": "object",
+            "properties": {
+                "preStaking": {
+                    "type": "string",
+                    "example": "1,243.02"
+                },
+                "standard": {
+                    "type": "string",
+                    "example": "1,243.02"
+                },
+                "t1": {
+                    "type": "string",
+                    "example": "1,243.02"
+                },
+                "t2": {
+                    "type": "string",
+                    "example": "1,243.02"
+                },
+                "total": {
+                    "type": "string",
+                    "example": "1,243.02"
+                },
+                "totalMainnetRewardPoolContribution": {
+                    "type": "string",
+                    "example": "1,243.02"
+                },
+                "totalMiningBlockchain": {
+                    "type": "string",
+                    "example": "1,243.02"
+                },
+                "totalNoPreStakingBonus": {
+                    "type": "string",
+                    "example": "1,243.02"
+                },
+                "totalReferrals": {
+                    "type": "string",
+                    "example": "1,243.02"
+                }
+            }
+        },
+        "tokenomics.BlockchainDetails": {
+            "type": "object",
+            "properties": {
+                "currentPrice": {
+                    "type": "number"
+                },
+                "marketCap": {
+                    "type": "number",
+                    "example": 111111.2423
+                },
+                "volume24h": {
+                    "type": "number"
+                }
+            }
+        },
         "tokenomics.BlockchainNetworkType": {
             "type": "string",
             "enum": [
@@ -861,6 +1697,67 @@ const docTemplate = `{
                 "availableExtraBonus": {
                     "type": "number",
                     "example": 2
+                }
+            }
+        },
+        "tokenomics.Miner": {
+            "type": "object",
+            "properties": {
+                "balance": {
+                    "type": "string",
+                    "example": "12345.6334"
+                },
+                "profilePictureUrl": {
+                    "type": "string",
+                    "example": "https://somecdn.com/p1.jpg"
+                },
+                "userId": {
+                    "type": "string",
+                    "example": "did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "jdoe"
+                }
+            }
+        },
+        "tokenomics.MiningBoostLevel": {
+            "type": "object",
+            "properties": {
+                "icePrice": {
+                    "type": "string",
+                    "example": "1234.1234"
+                },
+                "maxT1Referrals": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "miningRateBonus": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "miningSessionLengthSeconds": {
+                    "type": "integer",
+                    "example": 86400
+                },
+                "slashingDisabled": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "tokenomics.MiningBoostSummary": {
+            "type": "object",
+            "properties": {
+                "currentLevelIndex": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "levels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/tokenomics.MiningBoostLevel"
+                    }
                 }
             }
         },
@@ -1034,6 +1931,70 @@ const docTemplate = `{
                 }
             }
         },
+        "tokenomics.RankingSummary": {
+            "type": "object",
+            "properties": {
+                "globalRank": {
+                    "type": "integer",
+                    "example": 12333
+                }
+            }
+        },
+        "tokenomics.TotalCoinsSummary": {
+            "type": "object",
+            "properties": {
+                "blockchain": {
+                    "type": "number",
+                    "example": 111111.2423
+                },
+                "blockchainDetails": {
+                    "$ref": "#/definitions/tokenomics.BlockchainDetails"
+                },
+                "preStaking": {
+                    "type": "number",
+                    "example": 111111.2423
+                },
+                "standard": {
+                    "type": "number",
+                    "example": 111111.2423
+                },
+                "timeSeries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/tokenomics.TotalCoinsTimeSeriesDataPoint"
+                    }
+                },
+                "total": {
+                    "type": "number",
+                    "example": 111111.2423
+                }
+            }
+        },
+        "tokenomics.TotalCoinsTimeSeriesDataPoint": {
+            "type": "object",
+            "properties": {
+                "blockchain": {
+                    "type": "number",
+                    "example": 111111.2423
+                },
+                "date": {
+                    "type": "string",
+                    "example": "2022-01-03T16:20:52.156534Z"
+                },
+                "preStaking": {
+                    "type": "number",
+                    "example": 111111.2423
+                },
+                "standard": {
+                    "type": "number",
+                    "example": 111111.2423
+                },
+                "total": {
+                    "type": "number",
+                    "example": 111111.2423
+                }
+            }
+        },
         "users.KYCStep": {
             "type": "integer",
             "enum": [
@@ -1070,10 +2031,10 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "latest",
 	Host:             "",
-	BasePath:         "/v1w",
+	BasePath:         "",
 	Schemes:          []string{"https"},
 	Title:            "Tokenomics API",
-	Description:      "API that handles everything related to write-only operations for user's tokenomics.",
+	Description:      "API that handles everything related to user's tokenomics.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

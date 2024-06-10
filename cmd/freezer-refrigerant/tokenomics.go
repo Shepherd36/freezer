@@ -41,7 +41,7 @@ func (s *service) setupTokenomicsRoutes(router *server.Router) {
 //	@Failure		422				{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500				{object}	server.ErrorResponse
 //	@Failure		504				{object}	server.ErrorResponse	"if request times out"
-//	@Router			/tokenomics/{userId}/mining-boosts [PUT].
+//	@Router			/v1w/tokenomics/{userId}/mining-boosts [PUT].
 func (s *service) InitializeMiningBoostUpgrade( //nolint:gocritic // False negative.
 	ctx context.Context,
 	req *server.Request[InitializeMiningBoostUpgradeRequestBody, tokenomics.PendingMiningBoostUpgrade],
@@ -78,7 +78,7 @@ func (s *service) InitializeMiningBoostUpgrade( //nolint:gocritic // False negat
 //	@Failure		422				{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500				{object}	server.ErrorResponse
 //	@Failure		504				{object}	server.ErrorResponse	"if request times out"
-//	@Router			/tokenomics/{userId}/mining-boosts [PATCH].
+//	@Router			/v1w/tokenomics/{userId}/mining-boosts [PATCH].
 func (s *service) FinalizeMiningBoostUpgrade( //nolint:gocritic // False negative.
 	ctx context.Context,
 	req *server.Request[FinalizeMiningBoostUpgradeRequestBody, tokenomics.PendingMiningBoostUpgrade],
@@ -122,7 +122,7 @@ func (s *service) FinalizeMiningBoostUpgrade( //nolint:gocritic // False negativ
 //	@Failure		422				{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500				{object}	server.ErrorResponse
 //	@Failure		504				{object}	server.ErrorResponse	"if request times out"
-//	@Router			/tokenomics/{userId}/mining-sessions [POST].
+//	@Router			/v1w/tokenomics/{userId}/mining-sessions [POST].
 func (s *service) StartNewMiningSession( //nolint:gocritic // False negative.
 	ctx context.Context,
 	req *server.Request[StartNewMiningSessionRequestBody, tokenomics.MiningSummary],
@@ -185,7 +185,7 @@ func (s *service) StartNewMiningSession( //nolint:gocritic // False negative.
 //	@Failure		422				{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500				{object}	server.ErrorResponse
 //	@Failure		504				{object}	server.ErrorResponse	"if request times out"
-//	@Router			/tokenomics/{userId}/extra-bonus-claims [POST].
+//	@Router			/v1w/tokenomics/{userId}/extra-bonus-claims [POST].
 func (s *service) ClaimExtraBonus( //nolint:gocritic // False negative.
 	ctx context.Context,
 	req *server.Request[ClaimExtraBonusRequestBody, tokenomics.ExtraBonusSummary],
@@ -224,7 +224,7 @@ func (s *service) ClaimExtraBonus( //nolint:gocritic // False negative.
 //	@Failure		422				{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500				{object}	server.ErrorResponse
 //	@Failure		504				{object}	server.ErrorResponse	"if request times out"
-//	@Router			/tokenomics/{userId}/pre-staking [PUT].
+//	@Router			/v1w/tokenomics/{userId}/pre-staking [PUT].
 func (s *service) StartOrUpdatePreStaking( //nolint:gocritic // False negative.
 	ctx context.Context,
 	req *server.Request[StartOrUpdatePreStakingRequestBody, tokenomics.PreStakingSummary],

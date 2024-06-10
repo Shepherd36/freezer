@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: ice License 1.0
 
-basePath: /v1w
 definitions:
   coindistribution.CoinDistributionsForReview:
     properties:
@@ -104,6 +103,93 @@ definitions:
         example: something is missing
         type: string
     type: object
+  tokenomics.AdoptionSummary:
+    properties:
+      milestones:
+        items:
+          properties:
+            achievedAt:
+              example: "2022-01-03T16:20:52.156534Z"
+              type: string
+            baseMiningRate:
+              example: 1,243.02
+              type: string
+            milestone:
+              example: 1
+              type: integer
+            totalActiveUsers:
+              example: 1
+              type: integer
+          type: object
+        type: array
+      totalActiveUsers:
+        example: 11
+        type: integer
+    type: object
+  tokenomics.BalanceHistoryBalanceDiff:
+    properties:
+      amount:
+        example: 1,243.02
+        type: string
+      bonus:
+        example: 120
+        type: number
+      negative:
+        example: true
+        type: boolean
+    type: object
+  tokenomics.BalanceHistoryEntry:
+    properties:
+      balance:
+        $ref: '#/definitions/tokenomics.BalanceHistoryBalanceDiff'
+      time:
+        example: "2022-01-03T16:20:52.156534Z"
+        type: string
+      timeSeries:
+        items:
+          $ref: '#/definitions/tokenomics.BalanceHistoryEntry'
+        type: array
+    type: object
+  tokenomics.BalanceSummary:
+    properties:
+      preStaking:
+        example: 1,243.02
+        type: string
+      standard:
+        example: 1,243.02
+        type: string
+      t1:
+        example: 1,243.02
+        type: string
+      t2:
+        example: 1,243.02
+        type: string
+      total:
+        example: 1,243.02
+        type: string
+      totalMainnetRewardPoolContribution:
+        example: 1,243.02
+        type: string
+      totalMiningBlockchain:
+        example: 1,243.02
+        type: string
+      totalNoPreStakingBonus:
+        example: 1,243.02
+        type: string
+      totalReferrals:
+        example: 1,243.02
+        type: string
+    type: object
+  tokenomics.BlockchainDetails:
+    properties:
+      currentPrice:
+        type: number
+      marketCap:
+        example: 111111.2423
+        type: number
+      volume24h:
+        type: number
+    type: object
   tokenomics.BlockchainNetworkType:
     enum:
     - arbitrum
@@ -119,6 +205,49 @@ definitions:
       availableExtraBonus:
         example: 2
         type: number
+    type: object
+  tokenomics.Miner:
+    properties:
+      balance:
+        example: "12345.6334"
+        type: string
+      profilePictureUrl:
+        example: https://somecdn.com/p1.jpg
+        type: string
+      userId:
+        example: did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2
+        type: string
+      username:
+        example: jdoe
+        type: string
+    type: object
+  tokenomics.MiningBoostLevel:
+    properties:
+      icePrice:
+        example: "1234.1234"
+        type: string
+      maxT1Referrals:
+        example: 5
+        type: integer
+      miningRateBonus:
+        example: 100
+        type: integer
+      miningSessionLengthSeconds:
+        example: 86400
+        type: integer
+      slashingDisabled:
+        example: false
+        type: boolean
+    type: object
+  tokenomics.MiningBoostSummary:
+    properties:
+      currentLevelIndex:
+        example: 0
+        type: integer
+      levels:
+        items:
+          $ref: '#/definitions/tokenomics.MiningBoostLevel'
+        type: array
     type: object
   tokenomics.MiningRateBonuses:
     properties:
@@ -238,6 +367,51 @@ definitions:
         example: 1
         type: integer
     type: object
+  tokenomics.RankingSummary:
+    properties:
+      globalRank:
+        example: 12333
+        type: integer
+    type: object
+  tokenomics.TotalCoinsSummary:
+    properties:
+      blockchain:
+        example: 111111.2423
+        type: number
+      blockchainDetails:
+        $ref: '#/definitions/tokenomics.BlockchainDetails'
+      preStaking:
+        example: 111111.2423
+        type: number
+      standard:
+        example: 111111.2423
+        type: number
+      timeSeries:
+        items:
+          $ref: '#/definitions/tokenomics.TotalCoinsTimeSeriesDataPoint'
+        type: array
+      total:
+        example: 111111.2423
+        type: number
+    type: object
+  tokenomics.TotalCoinsTimeSeriesDataPoint:
+    properties:
+      blockchain:
+        example: 111111.2423
+        type: number
+      date:
+        example: "2022-01-03T16:20:52.156534Z"
+        type: string
+      preStaking:
+        example: 111111.2423
+        type: number
+      standard:
+        example: 111111.2423
+        type: number
+      total:
+        example: 111111.2423
+        type: number
+    type: object
   users.KYCStep:
     enum:
     - 0
@@ -268,12 +442,491 @@ info:
   contact:
     name: ice.io
     url: https://ice.io
-  description: API that handles everything related to write-only operations for user's
-    tokenomics.
+  description: API that handles everything related to user's tokenomics.
   title: Tokenomics API
   version: latest
 paths:
-  /getCoinDistributionsForReview:
+  /v1r/tokenomics-statistics/adoption:
+    get:
+      consumes:
+      - application/json
+      description: Returns the current adoption information.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tokenomics.AdoptionSummary'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Statistics
+  /v1r/tokenomics-statistics/top-miners:
+    get:
+      consumes:
+      - application/json
+      description: Returns the paginated leaderboard with top miners.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: a keyword to look for in the user's username or firstname/lastname
+        in: query
+        name: keyword
+        type: string
+      - description: max number of elements to return. Default is `10`.
+        in: query
+        name: limit
+        type: integer
+      - description: number of elements to skip before starting to fetch data
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Next-Offset:
+              description: 'if this value is 0, pagination stops, if not, use it in
+                the `offset` query param for the next call. '
+              type: integer
+          schema:
+            items:
+              $ref: '#/definitions/tokenomics.Miner'
+            type: array
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Statistics
+  /v1r/tokenomics-statistics/total-coins:
+    get:
+      consumes:
+      - application/json
+      description: Returns statistics about total coins, with an usecase breakdown.
+      parameters:
+      - description: number of days in the past to look for. Defaults to 3. Max is
+          90.
+        in: query
+        name: days
+        type: integer
+      - description: Timezone in format +04:30 or -03:45
+        in: query
+        name: tz
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tokenomics.TotalCoinsSummary'
+        "400":
+          description: if validations failed
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Statistics
+  /v1r/tokenomics/{userId}/balance-history:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Returns the balance history for the provided params.
+        If `startDate` is after `endDate`, we go backwards in time: I.E. today, yesterday, etc.
+        If `startDate` is before `endDate`, we go forwards in time: I.E. today, tomorrow, etc.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the user
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: The start date in RFC3339 or ISO8601 formats. Default is `now`
+          in UTC.
+        in: query
+        name: startDate
+        type: string
+      - description: The start date in RFC3339 or ISO8601 formats. Default is `end
+          of day, relative to startDate`.
+        in: query
+        name: endDate
+        type: string
+      - description: The user's timezone. I.E. `+03:00`, `-1:30`. Default is UTC.
+        in: query
+        name: tz
+        type: string
+      - description: max number of elements to return. Default is `24`.
+        in: query
+        name: limit
+        type: integer
+      - description: number of elements to skip before starting to fetch data
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/tokenomics.BalanceHistoryEntry'
+            type: array
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: if not allowed
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Tokenomics
+  /v1r/tokenomics/{userId}/balance-summary:
+    get:
+      consumes:
+      - application/json
+      description: Returns the balance related information.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the user
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tokenomics.BalanceSummary'
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: if not allowed
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Tokenomics
+  /v1r/tokenomics/{userId}/mining-boost-summary:
+    get:
+      consumes:
+      - application/json
+      description: Returns the mining boost related information.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the user
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tokenomics.MiningBoostSummary'
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: if not allowed
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "404":
+          description: if not found
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Tokenomics
+  /v1r/tokenomics/{userId}/mining-summary:
+    get:
+      consumes:
+      - application/json
+      description: Returns the mining related information.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the user
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tokenomics.MiningSummary'
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: if not allowed
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "404":
+          description: if not found
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Tokenomics
+  /v1r/tokenomics/{userId}/pre-staking-summary:
+    get:
+      consumes:
+      - application/json
+      description: Returns the pre-staking related information.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the user
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tokenomics.PreStakingSummary'
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: if not allowed
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "404":
+          description: if not found
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Tokenomics
+  /v1r/tokenomics/{userId}/ranking-summary:
+    get:
+      consumes:
+      - application/json
+      description: Returns the ranking related information.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the user
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tokenomics.RankingSummary'
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: if hidden by the user
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Tokenomics
+  /v1w/getCoinDistributionsForReview:
     post:
       consumes:
       - application/json
@@ -364,7 +1017,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - CoinDistribution
-  /reviewDistributions:
+  /v1w/reviewDistributions:
     post:
       consumes:
       - application/json
@@ -416,7 +1069,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - CoinDistribution
-  /tokenomics/{userId}/extra-bonus-claims:
+  /v1w/tokenomics/{userId}/extra-bonus-claims:
     post:
       consumes:
       - application/json
@@ -474,7 +1127,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - Tokenomics
-  /tokenomics/{userId}/mining-boosts:
+  /v1w/tokenomics/{userId}/mining-boosts:
     patch:
       consumes:
       - application/json
@@ -601,7 +1254,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - Tokenomics
-  /tokenomics/{userId}/mining-sessions:
+  /v1w/tokenomics/{userId}/mining-sessions:
     post:
       consumes:
       - application/json
@@ -671,7 +1324,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - Tokenomics
-  /tokenomics/{userId}/pre-staking:
+  /v1w/tokenomics/{userId}/pre-staking:
     put:
       consumes:
       - application/json

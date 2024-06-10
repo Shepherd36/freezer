@@ -42,7 +42,7 @@ func (s *service) setupCoinDistributionRoutes(router *server.Router) {
 //	@Failure		422							{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500							{object}	server.ErrorResponse
 //	@Failure		504							{object}	server.ErrorResponse	"if request times out"
-//	@Router			/getCoinDistributionsForReview [POST].
+//	@Router			/v1w/getCoinDistributionsForReview [POST].
 func (s *service) GetCoinDistributionsForReview( //nolint:gocritic // .
 	ctx context.Context,
 	req *server.Request[coindistribution.GetCoinDistributionsForReviewArg, coindistribution.CoinDistributionsForReview],
@@ -89,7 +89,7 @@ func (s *service) GetCoinDistributionsForReview( //nolint:gocritic // .
 //	@Failure		422				{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500				{object}	server.ErrorResponse
 //	@Failure		504				{object}	server.ErrorResponse	"if request times out"
-//	@Router			/reviewDistributions [POST].
+//	@Router			/v1w/reviewDistributions [POST].
 func (s *service) ReviewCoinDistributions( //nolint:gocritic // .
 	ctx context.Context,
 	req *server.Request[struct {

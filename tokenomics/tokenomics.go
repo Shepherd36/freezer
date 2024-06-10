@@ -87,6 +87,12 @@ func StartProcessor(ctx context.Context, cancel context.CancelFunc) Processor {
 	go prc.startICEPriceSyncer(ctx)
 	go prc.startDisableAdvancedTeamCfgSyncer(ctx)
 	go prc.startKYCConfigJSONSyncer(ctx)
+	go prc.startBlockchainCoinStatsJSONSyncer(ctx)
+	now := time.Now()
+	prc.mustInitTotalCoinsCache(ctx, now)
+
+	go prc.keepTotalCoinsCacheUpdated(ctx, now)
+	go prc.keepBlockchainDetailsCacheUpdated(ctx)
 	prc.extraBonusStartDate = extrabonusnotifier.MustGetExtraBonusStartDate(ctx, prc.db)
 	prc.extraBonusIndicesDistribution = extrabonusnotifier.MustGetExtraBonusIndicesDistribution(ctx, prc.db)
 	prc.livenessLoadDistributionStartDate = mustGetLivenessLoadDistributionStartDate(ctx, prc.db)
