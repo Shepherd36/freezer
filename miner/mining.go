@@ -42,10 +42,15 @@ func mine(now *time.Time, usr *user, t0Ref, tMinus1Ref *referral) (updatedUser *
 			updatedUser.BalanceLastUpdatedAt.YearDay() != now.YearDay() ||
 			(cfg.Development && updatedUser.BalanceLastUpdatedAt.Minute() != now.Minute())) &&
 			now.Sub(*updatedUser.BalanceLastUpdatedAt.Time) < cfg.MiningSessionDuration.Min*3
+		if shouldGenerateHistory {
+			updatedUser.BalanceTotalSlashed = 0
+			updatedUser.BalanceTotalMinted = 0
+		}
 
-		if !updatedUser.ReferralsCountChangeGuardUpdatedAt.IsNil() &&
-			!updatedUser.MiningSessionSoloStartedAt.IsNil() &&
-			updatedUser.ReferralsCountChangeGuardUpdatedAt.Equal(*updatedUser.MiningSessionSoloStartedAt.Time) {
+		if shouldGenerateHistory ||
+			(!updatedUser.ReferralsCountChangeGuardUpdatedAt.IsNil() &&
+				!updatedUser.MiningSessionSoloStartedAt.IsNil() &&
+				updatedUser.ReferralsCountChangeGuardUpdatedAt.Equal(*updatedUser.MiningSessionSoloStartedAt.Time)) {
 			// We need to update ReferralsCountChangeGuardUpdatedAt last time to avoid ErrDuplicate on next sessions
 			return updatedUser, shouldGenerateHistory, IDT0Changed, 0, 0
 		}
