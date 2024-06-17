@@ -148,9 +148,9 @@ func (r *repository) checkNextKYCStep(ctx context.Context, state *getCurrentMini
 	case users.QuizKYCStep:
 		social2Required := (state.KYCStepAttempted(users.Social2KYCStep-1) && state.KYCStepNotAttempted(users.Social2KYCStep)) ||
 			state.DelayPassedSinceLastKYCStepAttempt(users.Social2KYCStep, r.cfg.KYC.Social2Delay)
-		minDelaySinceLastLiveness := state.DelayPassedSinceLastKYCStepAttempt(users.LivenessDetectionKYCStep, r.cfg.MiningSessionDuration.Min)
+		minDelaySinceLastKYCStep := state.DelayPassedSinceLastKYCStepAttempt(users.Social2KYCStep-1, r.cfg.KYC.Social2Delay)
 
-		if r.isKYCStepForced(users.Social2KYCStep, state.UserID) || (!state.MiningSessionSoloLastStartedAt.IsNil() && social2Required && minDelaySinceLastLiveness && r.isKYCEnabled(ctx, state.LatestDevice, users.Social2KYCStep)) { //nolint:lll // .
+		if r.isKYCStepForced(users.Social2KYCStep, state.UserID) || (!state.MiningSessionSoloLastStartedAt.IsNil() && social2Required && minDelaySinceLastKYCStep && r.isKYCEnabled(ctx, state.LatestDevice, users.Social2KYCStep)) { //nolint:lll // .
 			return terror.New(ErrKYCRequired, map[string]any{
 				"kycSteps": []users.KYCStep{users.Social2KYCStep},
 			})
@@ -159,7 +159,7 @@ func (r *repository) checkNextKYCStep(ctx context.Context, state *getCurrentMini
 		nextKYCStep := state.KYCStepPassed + 1
 		dynamicSocialXRequired := (state.KYCStepAttempted(state.KYCStepPassed) && state.KYCStepNotAttempted(nextKYCStep)) ||
 			state.DelayPassedSinceLastKYCStepAttempt(nextKYCStep, r.cfg.KYC.DynamicSocialDelay)
-		minDelaySinceLastLiveness := state.DelayPassedSinceLastKYCStepAttempt(users.LivenessDetectionKYCStep, r.cfg.MiningSessionDuration.Min)
+		minDelaySinceLastLiveness := state.DelayPassedSinceLastKYCStepAttempt(state.KYCStepPassed, r.cfg.KYC.DynamicSocialDelay)
 
 		if r.isKYCStepForced(nextKYCStep, state.UserID) || (!state.MiningSessionSoloLastStartedAt.IsNil() && dynamicSocialXRequired && minDelaySinceLastLiveness && r.isKYCEnabled(ctx, state.LatestDevice, nextKYCStep)) { //nolint:lll // .
 			return terror.New(ErrKYCRequired, map[string]any{
