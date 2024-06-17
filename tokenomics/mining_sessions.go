@@ -85,15 +85,13 @@ func (r *repository) StartNewMiningSession( //nolint:funlen,gocognit // A lot of
 	if err != nil {
 		return err
 	}
-	prevKYCStepPassed := old[0].KYCStepPassed
 	if err = r.validateKYC(ctx, userID, old[0], skipKYCSteps); shouldRollback == nil && err != nil {
 		return err
 	}
 	if err = r.updateTMinus1(ctx, id, old[0].IDT0, old[0].IDTMinus1); err != nil {
 		return errors.Wrapf(err, "failed to updateTMinus1 for id:%v", id)
 	}
-	if (old[0].KYCStepPassed == users.QuizKYCStep && prevKYCStepPassed < users.QuizKYCStep) ||
-		(old[0].KYCStepPassed == users.Social2KYCStep && prevKYCStepPassed == users.QuizKYCStep) {
+	if r.isExtraBonusAvailable(old[0]) {
 		if err = r.ClaimExtraBonus(ctx, &ExtraBonusSummary{UserID: userID}); err != nil && !errors.Is(err, ErrNotFound) {
 			return errors.Wrapf(err, "failed to ClaimExtraBonus for:%v", userID)
 		}
@@ -207,6 +205,20 @@ func (r *repository) validateRollbackNegativeMiningProgress(
 		*rollbackNegativeMiningProgress = false
 	}
 	return rollbackNegativeMiningProgress, nil
+}
+
+func (r *repository) isExtraBonusAvailable(state *getCurrentMiningSession) bool {
+	// This is just a hack so that we can differentiate between a failed/skipped Social 2 and a successful one:
+	// Social2KYCStep is a failed/skipped Social 2 outcome
+	// Social3KYCStep is a completed Social 2 outcome
+	// And, in actuality, there is no Social 3
+	if (users.QuizKYCStep == state.KYCStepPassed || users.Social3KYCStep == state.KYCStepPassed) &&
+		!state.DelayPassedSinceLastKYCStepAttempt(state.KYCStepPassed, r.cfg.MiningSessionDuration.Min) &&
+		(state.ExtraBonusStartedAt.IsNil() || state.ExtraBonusStartedAt.Add(r.cfg.ExtraBonuses.Duration).Before(*time.Now().Time)) {
+		return true
+	}
+
+	return false
 }
 
 func (r *repository) newStartOrExtendMiningSession(old *StartOrExtendMiningSession, now *time.Time) (*StartOrExtendMiningSession, stdlibtime.Duration) {

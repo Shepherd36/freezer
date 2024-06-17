@@ -479,7 +479,7 @@ func (r *repository) overrideKYCStateWithEskimoKYCState(ctx context.Context, use
 			model.MiningBlockchainAccountAddressField
 			model.KYCState
 			model.DeserializedUsersKey
-			KycFaceAvailable bool `json:"kycFaceAvailable"`
+			KycFaceAvailable bool `json:"kycFaceAvailable" redis:"-"`
 		}
 		if err3 := json.Unmarshal(data, &usr); err3 != nil {
 			return false, errors.Wrapf(err3, "failed to unmarshal into %#v, data: `%v`, skipKYCSteps:%#v", &usr, string(data), skipKYCSteps)
