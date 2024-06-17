@@ -133,5 +133,5 @@ func BaseMiningRate(now, createdAt *time.Time, startingBaseMiningRate float64, m
 		return startingBaseMiningRate
 	}
 
-	return startingBaseMiningRate / (math.Pow(2, math.Min(float64(milestones), float64(now.Sub(*createdAt.Time)/durationBetweenMilestones))))
+	return startingBaseMiningRate / (math.Pow(2, math.Min(float64(milestones-1), float64(now.Sub(*createdAt.Time)/durationBetweenMilestones))))
 }
