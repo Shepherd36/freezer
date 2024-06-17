@@ -191,6 +191,9 @@ func (s *service) ClaimExtraBonus( //nolint:gocritic // False negative.
 	req *server.Request[ClaimExtraBonusRequestBody, tokenomics.ExtraBonusSummary],
 ) (*server.Response[tokenomics.ExtraBonusSummary], *server.Response[server.ErrorResponse]) {
 	resp := &tokenomics.ExtraBonusSummary{UserID: req.Data.UserID}
+	if true {
+		return nil, server.Forbidden(errors.New("disabled"))
+	}
 	if err := s.tokenomicsProcessor.ClaimExtraBonus(contextWithHashCode(ctx, req), resp); err != nil {
 		err = errors.Wrapf(err, "failed to claim extra bonus for userID:%v", req.Data.UserID)
 		switch {

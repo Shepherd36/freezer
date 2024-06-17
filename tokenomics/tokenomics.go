@@ -96,14 +96,14 @@ func StartProcessor(ctx context.Context, cancel context.CancelFunc) Processor {
 	prc.extraBonusStartDate = extrabonusnotifier.MustGetExtraBonusStartDate(ctx, prc.db)
 	prc.extraBonusIndicesDistribution = extrabonusnotifier.MustGetExtraBonusIndicesDistribution(ctx, prc.db)
 	prc.livenessLoadDistributionStartDate = mustGetLivenessLoadDistributionStartDate(ctx, prc.db)
-	log.Info(fmt.Sprintf("configuration loaded[livenessLoadDistributionStartDate]: %#v", prc.livenessLoadDistributionStartDate))
-	log.Info(fmt.Sprintf("configuration loaded[FaceRecognitionDelay]: %#v", cfg.KYC.FaceRecognitionDelay))
-	log.Info(fmt.Sprintf("configuration loaded[Adoption]: %#v", cfg.Adoption))
-	log.Info(fmt.Sprintf("configuration loaded[MiningBoost]: %#v", cfg.MiningBoost))
-	log.Info(fmt.Sprintf("configuration loaded[ExtraBonuses]: %#v", cfg.ExtraBonuses))
-	log.Info(fmt.Sprintf("configuration loaded[RollbackNegativeMining]: %#v", cfg.RollbackNegativeMining))
-	log.Info(fmt.Sprintf("configuration loaded[MiningSessionDuration]: %#v", cfg.MiningSessionDuration))
-	log.Info(fmt.Sprintf("configuration loaded[GlobalAggregationInterval]: %#v", cfg.GlobalAggregationInterval))
+	log.Info(fmt.Sprintf("configuration loaded[livenessLoadDistributionStartDate]: %+v", prc.livenessLoadDistributionStartDate))
+	log.Info(fmt.Sprintf("configuration loaded[FaceRecognitionDelay]: %+v", cfg.KYC.FaceRecognitionDelay))
+	log.Info(fmt.Sprintf("configuration loaded[Adoption]: %+v", cfg.Adoption))
+	log.Info(fmt.Sprintf("configuration loaded[MiningBoost]: %+v", cfg.MiningBoost))
+	log.Info(fmt.Sprintf("configuration loaded[ExtraBonuses]: %+v", cfg.ExtraBonuses))
+	log.Info(fmt.Sprintf("configuration loaded[RollbackNegativeMining]: %+v", cfg.RollbackNegativeMining))
+	log.Info(fmt.Sprintf("configuration loaded[MiningSessionDuration]: %+v", cfg.MiningSessionDuration))
+	log.Info(fmt.Sprintf("configuration loaded[GlobalAggregationInterval]: %+v", cfg.GlobalAggregationInterval))
 
 	return prc
 }
