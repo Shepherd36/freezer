@@ -222,6 +222,9 @@ func (r *repository) syncDisableAdvancedTeamCfg(ctx context.Context) error {
 }
 
 func (r *repository) isAdvancedTeamEnabled(device string) bool {
+	if true {
+		return false
+	}
 	if device == "" {
 		return true
 	}

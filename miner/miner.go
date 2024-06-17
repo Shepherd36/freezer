@@ -67,7 +67,7 @@ func MustStartMining(ctx context.Context, cancel context.CancelFunc) Client {
 		dwhClient:                  dwh.MustConnect(context.Background(), applicationYamlKey),
 		wg:                         new(sync.WaitGroup),
 		telemetry:                  new(telemetry).mustInit(cfg),
-		quizRepository:             quiz.NewReadRepository(context.Background()),
+		//quizRepository:             quiz.NewReadRepository(context.Background()),
 	}
 	go mi.startDisableAdvancedTeamCfgSyncer(ctx)
 	mi.wg.Add(int(cfg.Workers))
@@ -95,7 +95,7 @@ func (m *miner) Close() error {
 		errors.Wrap(m.db.Close(), "failed to close db"),
 		errors.Wrap(m.dwhClient.Close(), "failed to close dwh"),
 		errors.Wrap(m.coinDistributionRepository.Close(), "failed to close coinDistributionRepository"),
-		errors.Wrap(m.quizRepository.Close(), "failed to close quizClient"),
+		//errors.Wrap(m.quizRepository.Close(), "failed to close quizClient"),
 	).ErrorOrNil()
 }
 
@@ -109,9 +109,9 @@ func (m *miner) CheckHealth(ctx context.Context) error {
 	if err := m.checkDBHealth(ctx); err != nil {
 		return err
 	}
-	if err := m.quizRepository.CheckHealth(ctx); err != nil {
-		return err
-	}
+	//if err := m.quizRepository.CheckHealth(ctx); err != nil {
+	//	return err
+	//}
 	type ts struct {
 		TS *time.Time `json:"ts"`
 	}
@@ -479,7 +479,7 @@ func (m *miner) mine(ctx context.Context, workerNumber int64) {
 			6. Syncing quiz state
 		******************************************************************************************************************************************************/
 		before = time.Now()
-		if len(syncQuizUserIDs) > 0 && len(histories) > 0 {
+		if false && (len(syncQuizUserIDs) > 0 && len(histories) > 0) {
 			reqCtx, reqCancel = context.WithTimeout(context.Background(), requestDeadline)
 			var err error
 			quizStatuses, err = m.quizRepository.GetQuizStatus(reqCtx, syncQuizUserIDs...)
@@ -734,6 +734,10 @@ func isAdvancedTeamEnabled(device string) bool {
 }
 
 func isAdvancedTeamDisabled(device string) bool {
+	if true {
+		return true
+	}
+
 	return !isAdvancedTeamEnabled(device)
 }
 
