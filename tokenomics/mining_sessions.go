@@ -71,9 +71,15 @@ func (r *repository) StartNewMiningSession( //nolint:funlen,gocognit // A lot of
 	}
 	if !old[0].MiningSessionSoloEndedAt.IsNil() &&
 		!old[0].MiningSessionSoloLastStartedAt.IsNil() &&
-		old[0].MiningSessionSoloEndedAt.After(*now.Time) &&
-		now.Sub(*old[0].MiningSessionSoloLastStartedAt.Time) < r.cfg.MiningSessionDuration.Min {
-		return ErrDuplicate
+		old[0].MiningSessionSoloEndedAt.After(*now.Time) {
+		maxMiningSessionDuration := r.cfg.maxMiningSessionDuration(old[0].MiningBoostLevelIndexField)
+		durationIncludingDayOffs := old[0].MiningSessionSoloEndedAt.Sub(*old[0].MiningSessionSoloLastStartedAt.Time)
+		if dayOffIsUsed := durationIncludingDayOffs > maxMiningSessionDuration && now.Sub(*old[0].MiningSessionSoloLastStartedAt.Time) > maxMiningSessionDuration; dayOffIsUsed {
+			maxMiningSessionDuration = r.cfg.MiningSessionDuration.Max
+		}
+		if (now.Sub(*old[0].MiningSessionSoloLastStartedAt.Time)/r.cfg.MiningSessionDuration.Min)%(maxMiningSessionDuration/r.cfg.MiningSessionDuration.Min) == 0 {
+			return ErrDuplicate
+		}
 	}
 	if !old[0].MiningSessionSoloEndedAt.IsNil() &&
 		!old[0].ReferralsCountChangeGuardUpdatedAt.IsNil() &&

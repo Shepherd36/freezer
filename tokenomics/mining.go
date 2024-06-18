@@ -254,6 +254,9 @@ func (r *repository) isT0Online(ctx context.Context, idT0 int64, now *time.Time)
 
 func (r *repository) calculateMiningSession(now, start, end *time.Time, maxMiningSessionDuration stdlibtime.Duration) (ms *MiningSession) {
 	if ms = CalculateMiningSession(now, start, end, maxMiningSessionDuration); ms != nil {
+		if ms.Free != nil && *ms.Free {
+			ms.EndedAt = time.New(ms.StartedAt.Add(r.cfg.MiningSessionDuration.Max))
+		}
 		ms.ResettableStartingAt = time.New(ms.StartedAt.Add(r.cfg.MiningSessionDuration.Min))
 		ms.WarnAboutExpirationStartingAt = time.New(ms.StartedAt.Add(maxMiningSessionDuration - r.cfg.MiningSessionDuration.Max).Add(r.cfg.MiningSessionDuration.WarnAboutExpirationAfter))
 	}

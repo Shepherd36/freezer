@@ -36,4 +36,12 @@ func TestRepositoryCalculateMiningSession(t *testing.T) {
 	actual = repo.calculateMiningSession(now, start, end, repo.cfg.MiningSessionDuration.Max)
 	assert.EqualValues(t, time.New(start.Add(repo.cfg.MiningSessionDuration.Max)), actual.StartedAt)
 	assert.True(t, *actual.Free)
+
+	boostedSessionDuration := 2 * repo.cfg.MiningSessionDuration.Max
+	start = time.New(now.Add(-1 - boostedSessionDuration))
+	end = time.New(now.Add(boostedSessionDuration).Add(repo.cfg.MiningSessionDuration.Min).Add(-1 - boostedSessionDuration))
+	actual = repo.calculateMiningSession(now, start, end, boostedSessionDuration)
+	assert.EqualValues(t, time.New(start.Add(boostedSessionDuration)), actual.StartedAt)
+	assert.EqualValues(t, time.New(start.Add(boostedSessionDuration).Add(repo.cfg.MiningSessionDuration.Max)), actual.EndedAt)
+	assert.True(t, *actual.Free)
 }
