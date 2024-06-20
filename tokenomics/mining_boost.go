@@ -4,12 +4,14 @@ package tokenomics
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"math"
 	"math/big"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	stdlibtime "time"
 
@@ -100,7 +102,8 @@ func (r *repository) InitializeMiningBoostUpgrade(ctx context.Context, miningBoo
 	upgradePrice := (*r.cfg.MiningBoost.levels.Load())[miningBoostLevelIndex].icePrice - previousLevelPrice
 	storedPrice := strconv.FormatFloat(upgradePrice, 'f', miningBoostPricePrecision, 64)
 	key := fmt.Sprintf("mining_boost_upgrades:%v", id)
-	val := fmt.Sprintf("%v:%v", miningBoostLevelIndex, storedPrice)
+	randomPart := fmt.Sprint(random(4))
+	val := fmt.Sprintf("%v:%v", miningBoostLevelIndex, storedPrice+randomPart)
 	result, err := r.db.Set(ctx, key, val, r.cfg.MiningBoost.SessionLength).Result()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to set new mining_boost_upgrade for userID:%v", userID)
@@ -111,7 +114,7 @@ func (r *repository) InitializeMiningBoostUpgrade(ctx context.Context, miningBoo
 	icePrice := strconv.FormatFloat(upgradePrice*(1+(float64(r.cfg.MiningBoost.PriceDelta)/100)), 'f', miningBoostPricePrecision, 64)
 	return &PendingMiningBoostUpgrade{
 		ExpiresAt:      time.New(stdlibtime.Now().Add(r.cfg.MiningBoost.SessionLength)),
-		ICEPrice:       icePrice,
+		ICEPrice:       icePrice + randomPart,
 		PaymentAddress: r.cfg.MiningBoost.PaymentAddress,
 	}, nil
 }
@@ -181,20 +184,9 @@ func (r *repository) FinalizeMiningBoostUpgrade(ctx context.Context, network Blo
 		amount += *res[0].MiningBoostAmountBurnt
 	}
 	var newMiningBoostLevelIndex *model.FlexibleUint64 = nil
-	if icePrice-burntAmount <= 0 {
+	if icePrice-burntAmount == 0 {
 		targetLevel := model.FlexibleUint64(miningBoostLevelIndex)
 		newMiningBoostLevelIndex = &targetLevel
-	}
-	if extraBurntAmount := burntAmount - icePrice; extraBurntAmount > 0 {
-		for ix, level := range *r.cfg.MiningBoost.levels.Load() {
-			if ix > int(miningBoostLevelIndex) {
-				extraBurntAmount -= level.icePrice - (*r.cfg.MiningBoost.levels.Load())[ix-1].icePrice
-			}
-			if extraBurntAmount >= 0 {
-				extraLevel := model.FlexibleUint64(ix)
-				newMiningBoostLevelIndex = &extraLevel
-			}
-		}
 	}
 	var prestakingBonus, prestakingAllocation float64
 	switch {
@@ -253,7 +245,7 @@ func (r *repository) FinalizeMiningBoostUpgrade(ctx context.Context, network Blo
 		}
 	}
 
-	if icePrice-burntAmount <= 0 {
+	if icePrice-burntAmount == 0 {
 		return nil, nil
 	}
 	initiallyProposedToPayAmount := icePrice * (1 + (float64(r.cfg.MiningBoost.PriceDelta) / 100))
@@ -395,4 +387,23 @@ func (r *repository) buildMiningBoostLevels() *[]*MiningBoostLevel {
 	sort.SliceStable(levels, func(ii, jj int) bool { return levels[ii].icePrice < levels[jj].icePrice })
 
 	return &levels
+}
+
+var secureRandomMx sync.Mutex
+
+func random(digits int) uint64 {
+	secureRandomMx.Lock()
+	defer secureRandomMx.Unlock()
+
+	minVal := big.NewInt(int64(1))
+	for i := 1; i < digits; i++ {
+		minVal = minVal.Mul(minVal, big.NewInt(10))
+	}
+	maxVal := big.NewInt(0).Mul(minVal, big.NewInt(10))
+	rangeVal := big.NewInt(0).Sub(maxVal, minVal)
+
+	rnd, err := rand.Int(rand.Reader, rangeVal)
+	log.Panic(err)
+
+	return rnd.Uint64() + minVal.Uint64()
 }
