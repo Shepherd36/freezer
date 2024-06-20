@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -18,7 +19,9 @@ import (
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
+	"github.com/goccy/go-json"
 	"github.com/hashicorp/go-multierror"
+	"github.com/imroc/req/v3"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 
@@ -307,7 +310,7 @@ func (r *repository) getSenderAndBurntAmountForMiningBoostUpgrade(ctx context.Co
 			return "", 0, ErrNotFound
 		}
 		var rpcErr ethrpc.Error
-		if errors.As(err, &rpcErr) && rpcErr != nil && rpcErr.ErrorCode() == 429 {
+		if errors.As(err, &rpcErr) && rpcErr != nil && (rpcErr.ErrorCode() == 429 || rpcErr.ErrorCode() >= 500) {
 			stdlibtime.Sleep(5 * stdlibtime.Second)
 
 			return r.getSenderAndBurntAmountForMiningBoostUpgrade(ctx, network, txHash)
@@ -382,14 +385,52 @@ func (r *repository) startICEPriceSyncer(ctx context.Context) {
 }
 
 func (r *repository) syncICEPrice(ctx context.Context) error {
-	detailedCoinMetrics, err := r.detailedMetricsRepo.ReadDetails(ctx)
+	price, err := FetchICEPrice(ctx)
 	if err != nil {
-		return errors.Wrap(err, "failed to read detailedCoinMetrics")
+		return errors.Wrap(err, "failed to fetchICEPrice")
 	}
-	r.cfg.MiningBoost.icePrice.Store(&detailedCoinMetrics.CurrentPrice)
+	r.cfg.MiningBoost.icePrice.Store(&price)
 	r.cfg.MiningBoost.levels.Store(r.buildMiningBoostLevels())
 
 	return nil
+}
+
+func FetchICEPrice(ctx context.Context) (float64, error) {
+	if resp, err := req.
+		SetContext(ctx).
+		SetRetryCount(25).
+		SetRetryBackoffInterval(10*stdlibtime.Millisecond, 1*stdlibtime.Second).
+		SetRetryHook(func(resp *req.Response, err error) {
+			if err != nil {
+				log.Error(errors.Wrap(err, "failed to fetch ice price, retrying..."))
+			} else {
+				body, bErr := resp.ToString()
+				log.Error(errors.Wrapf(bErr, "failed to parse negative response body for fetching ice price"))
+				log.Error(errors.Errorf("failed to fetch ice price with status code:%v, body:%v, retrying...", resp.GetStatusCode(), body))
+			}
+		}).
+		SetRetryCondition(func(resp *req.Response, err error) bool {
+			return err != nil || resp.GetStatusCode() != http.StatusOK
+		}).
+		AddQueryParam("caller", "freezer-refrigerant").
+		SetHeader("Accept", "application/json").
+		SetHeader("Cache-Control", "no-cache, no-store, must-revalidate").
+		SetHeader("Pragma", "no-cache").
+		SetHeader("Expires", "0").
+		Get("https://data.ice.io/stats"); err != nil {
+		return 0, errors.Wrap(err, "failed to fetch https://data.ice.io/stats")
+	} else if data, err2 := resp.ToBytes(); err2 != nil {
+		return 0, errors.Wrap(err2, "failed to read body of https://data.ice.io/stats")
+	} else {
+		var stats struct {
+			Price float64 `json:"price"`
+		}
+		if err3 := json.Unmarshal(data, &stats); err3 != nil {
+			return 0, errors.Wrapf(err3, "failed to unmarshal into %#v, data: `%v`", &stats, string(data))
+		} else {
+			return stats.Price, nil
+		}
+	}
 }
 
 func (r *repository) buildMiningBoostLevels() *[]*MiningBoostLevel {
