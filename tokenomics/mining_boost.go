@@ -100,10 +100,12 @@ func (r *repository) InitializeMiningBoostUpgrade(ctx context.Context, miningBoo
 		previousLevelPrice = (*r.cfg.MiningBoost.levels.Load())[*res[0].MiningBoostLevelIndex].icePrice
 	}
 	upgradePrice := (*r.cfg.MiningBoost.levels.Load())[miningBoostLevelIndex].icePrice - previousLevelPrice
+	randomizedPrice, err := strconv.ParseFloat(fmt.Sprint(uint64(upgradePrice))+"."+fmt.Sprint(random(4)), 64)
+	log.Panic(err)
+	upgradePrice = randomizedPrice
 	storedPrice := strconv.FormatFloat(upgradePrice, 'f', miningBoostPricePrecision, 64)
 	key := fmt.Sprintf("mining_boost_upgrades:%v", id)
-	randomPart := fmt.Sprint(random(4))
-	val := fmt.Sprintf("%v:%v", miningBoostLevelIndex, storedPrice+randomPart)
+	val := fmt.Sprintf("%v:%v", miningBoostLevelIndex, storedPrice)
 	result, err := r.db.Set(ctx, key, val, r.cfg.MiningBoost.SessionLength).Result()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to set new mining_boost_upgrade for userID:%v", userID)
@@ -114,7 +116,7 @@ func (r *repository) InitializeMiningBoostUpgrade(ctx context.Context, miningBoo
 	icePrice := strconv.FormatFloat(upgradePrice*(1+(float64(r.cfg.MiningBoost.PriceDelta)/100)), 'f', miningBoostPricePrecision, 64)
 	return &PendingMiningBoostUpgrade{
 		ExpiresAt:      time.New(stdlibtime.Now().Add(r.cfg.MiningBoost.SessionLength)),
-		ICEPrice:       icePrice + randomPart,
+		ICEPrice:       icePrice,
 		PaymentAddress: r.cfg.MiningBoost.PaymentAddress,
 	}, nil
 }
