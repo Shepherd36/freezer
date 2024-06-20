@@ -19,6 +19,7 @@ import (
 	ethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	ethrpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
@@ -299,6 +300,13 @@ func (r *repository) getSenderAndBurntAmountForMiningBoostUpgrade(ctx context.Co
 		if errors.Is(err, ethereum.NotFound) {
 			return "", 0, ErrNotFound
 		}
+		var rpcErr ethrpc.Error
+		if errors.As(err, &rpcErr) && rpcErr != nil && rpcErr.ErrorCode() == 429 {
+			stdlibtime.Sleep(5 * stdlibtime.Second)
+
+			return r.getSenderAndBurntAmountForMiningBoostUpgrade(ctx, network, txHash)
+		}
+
 		return "", 0, errors.Wrapf(err, "failed to get TransactionReceipt for tx: %v", txHash)
 	}
 
