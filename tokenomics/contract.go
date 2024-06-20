@@ -9,7 +9,6 @@ import (
 	"sync/atomic"
 	stdlibtime "time"
 
-	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 
@@ -370,8 +369,6 @@ type (
 			ContractAddresses             map[BlockchainNetworkType]string              `yaml:"contractAddresses" mapstructure:"contractAddresses"`
 			Levels                        map[float64]*MiningBoostLevel                 `yaml:"levels" mapstructure:"levels"`
 			SessionLength                 stdlibtime.Duration                           `yaml:"sessionLength" mapstructure:"sessionLength"`
-			PaymentAddress                string                                        `yaml:"paymentAddress" mapstructure:"paymentAddress"`
-			paymentAddress                ethcommon.Address                             `yaml:"-" mapstructure:"-" json:"-"`
 			PriceDelta                    uint8                                         `yaml:"priceDelta" mapstructure:"priceDelta"`
 		} `yaml:"mining-boost" mapstructure:"mining-boost"`
 		BlockchainCoinStatsJSONURL          string `yaml:"blockchain-coin-stats-json-url" mapstructure:"blockchain-coin-stats-json-url"`

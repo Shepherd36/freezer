@@ -116,7 +116,7 @@ func (r *repository) InitializeMiningBoostUpgrade(ctx context.Context, miningBoo
 	return &PendingMiningBoostUpgrade{
 		ExpiresAt:      time.New(stdlibtime.Now().Add(r.cfg.MiningBoost.SessionLength)),
 		ICEPrice:       icePrice,
-		PaymentAddress: r.cfg.MiningBoost.PaymentAddress,
+		PaymentAddress: generateMiningBoostPaymentAddress(id),
 	}, nil
 }
 
@@ -166,7 +166,7 @@ func (r *repository) FinalizeMiningBoostUpgrade(ctx context.Context, network Blo
 		return nil, errors.Errorf("current mining boost level `%v` is greater or equal than provided one `%v`", *res[0].MiningBoostLevelIndex, miningBoostLevelIndex)
 	}
 	txHash = strings.ToLower(txHash)
-	senderAddress, burntAmount, err := r.getSenderAndBurntAmountForMiningBoostUpgrade(ctx, network, txHash)
+	senderAddress, burntAmount, err := r.getSenderAndBurntAmountForMiningBoostUpgrade(ctx, network, generateMiningBoostPaymentAddress(id), txHash)
 	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, errors.Wrap(err, "failed to getBurntAmountForMiningBoostUpgrade")
 	}
@@ -176,7 +176,7 @@ func (r *repository) FinalizeMiningBoostUpgrade(ctx context.Context, network Blo
 		}
 		return nil, ErrInvalidMiningBoostUpgradeTX
 	}
-	if txErr := r.checkTxHashUniqueness(ctx, userID, txHash, senderAddress, burntAmount, miningBoostLevelIndex); txErr != nil {
+	if txErr := r.checkTxHashUniqueness(ctx, userID, txHash, generateMiningBoostPaymentAddress(id), senderAddress, burntAmount, miningBoostLevelIndex); txErr != nil { //nolint:lll // .
 		return nil, errors.Wrapf(txErr, "failed to check uniqueness of tx hash for userID: `%v`", userID)
 	}
 
@@ -200,17 +200,17 @@ func (r *repository) FinalizeMiningBoostUpgrade(ctx context.Context, network Blo
 			}
 		}
 	}
-	var prestakingBonus, prestakingAllocation float64
+	var preStakingBonus, preStakingAllocation float64
 	switch {
 	case newMiningBoostLevelIndex != nil:
-		prestakingBonus = float64((*r.cfg.MiningBoost.levels.Load())[int(*newMiningBoostLevelIndex)].MiningRateBonus)
-		prestakingAllocation = 100
+		preStakingBonus = float64((*r.cfg.MiningBoost.levels.Load())[int(*newMiningBoostLevelIndex)].MiningRateBonus)
+		preStakingAllocation = 100
 	case res[0].MiningBoostLevelIndex != nil:
-		prestakingBonus = float64((*r.cfg.MiningBoost.levels.Load())[int(*res[0].MiningBoostLevelIndex)].MiningRateBonus)
-		prestakingAllocation = 100
+		preStakingBonus = float64((*r.cfg.MiningBoost.levels.Load())[int(*res[0].MiningBoostLevelIndex)].MiningRateBonus)
+		preStakingAllocation = 100
 	default:
-		prestakingBonus = 0
-		prestakingAllocation = 0
+		preStakingBonus = 0
+		preStakingAllocation = 0
 	}
 	updatedState := struct {
 		model.MiningBoostLevelIndexField
@@ -221,8 +221,8 @@ func (r *repository) FinalizeMiningBoostUpgrade(ctx context.Context, network Blo
 	}{
 		MiningBoostLevelIndexField:  model.MiningBoostLevelIndexField{MiningBoostLevelIndex: newMiningBoostLevelIndex},
 		MiningBoostAmountBurntField: model.MiningBoostAmountBurntField{MiningBoostAmountBurnt: &amount},
-		PreStakingAllocationField:   model.PreStakingAllocationField{PreStakingAllocation: prestakingAllocation},
-		PreStakingBonusField:        model.PreStakingBonusField{PreStakingBonus: prestakingBonus},
+		PreStakingAllocationField:   model.PreStakingAllocationField{PreStakingAllocation: preStakingAllocation},
+		PreStakingBonusField:        model.PreStakingBonusField{PreStakingBonus: preStakingBonus},
 		DeserializedUsersKey:        model.DeserializedUsersKey{ID: id},
 	}
 
@@ -266,16 +266,22 @@ func (r *repository) FinalizeMiningBoostUpgrade(ctx context.Context, network Blo
 	return &PendingMiningBoostUpgrade{
 		ExpiresAt:      time.New(stdlibtime.Unix(0, expireAt.UnixNano())),
 		ICEPrice:       strconv.FormatFloat(remainingPayment, 'f', miningBoostPricePrecision, 64),
-		PaymentAddress: r.cfg.MiningBoost.PaymentAddress,
+		PaymentAddress: generateMiningBoostPaymentAddress(id),
 	}, nil
 }
 
+func generateMiningBoostPaymentAddress(internalID int64) string {
+	const nullAddressStaticPart = `0x000000000000000000000000000000000000`
+
+	return fmt.Sprintf("%v%vdead", nullAddressStaticPart[:len(nullAddressStaticPart)-len(strconv.Itoa(int(internalID)))], internalID) //nolint:lll // .
+}
+
 //nolint:revive // .
-func (r *repository) checkTxHashUniqueness(ctx context.Context, userID, txHash, senderAddress string, burntAmount float64, miningBoostLevelIndex uint64) error {
+func (r *repository) checkTxHashUniqueness(ctx context.Context, userID, txHash, paymentAddress, senderAddress string, burntAmount float64, miningBoostLevelIndex uint64) error {
 	if _, err := storagev2.Exec(ctx, r.globalDB,
-		`INSERT INTO mining_boost_accepted_transactions (created_at, mining_boost_level, tenant, tx_hash, ice_amount, sender_address, user_id)
-            VALUES($1, $2, $3, $4, $5, $6, $7);`,
-		*time.Now().Time, miningBoostLevelIndex, r.cfg.Tenant, txHash, strconv.FormatFloat(burntAmount, 'f', 15, 64), senderAddress, userID); err != nil {
+		`INSERT INTO mining_boost_accepted_transactions (created_at, mining_boost_level, tenant, tx_hash, ice_amount, payment_address, sender_address, user_id)
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8);`,
+		*time.Now().Time, miningBoostLevelIndex, r.cfg.Tenant, txHash, strconv.FormatFloat(burntAmount, 'f', 15, 64), paymentAddress, senderAddress, userID); err != nil {
 		if storagev2.IsErr(err, storagev2.ErrDuplicate) { //nolint:nestif // .
 			if storagev2.IsErr(err, storagev2.ErrDuplicate, "txhash") || storagev2.IsErr(err, storagev2.ErrDuplicate, "pk") { //nolint:gocritic // .
 				return ErrDuplicate
@@ -287,6 +293,7 @@ func (r *repository) checkTxHashUniqueness(ctx context.Context, userID, txHash, 
 
 	return nil
 }
+
 func (r *repository) rollbackTxHashUniqueness(ctx context.Context, userID, txHash string) error {
 	if _, err := storagev2.Exec(ctx, r.globalDB,
 		`DELETE FROM mining_boost_accepted_transactions WHERE user_id = $1 and tx_hash = $2;`,
@@ -301,7 +308,7 @@ const (
 	erc20ABI = `[{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]`
 )
 
-func (r *repository) getSenderAndBurntAmountForMiningBoostUpgrade(ctx context.Context, network BlockchainNetworkType, txHash string) (string, float64, error) {
+func (r *repository) getSenderAndBurntAmountForMiningBoostUpgrade(ctx context.Context, network BlockchainNetworkType, paymentAddress, txHash string) (string, float64, error) {
 	networkClient := r.cfg.MiningBoost.networkClients[network][r.cfg.MiningBoost.networkEndpointCurrentLBIndex[network].Add(1)%uint64(len(r.cfg.MiningBoost.networkClients[network]))] //nolint:lll // .
 
 	receipt, err := networkClient.TransactionReceipt(ctx, ethcommon.HexToHash(txHash))
@@ -313,7 +320,7 @@ func (r *repository) getSenderAndBurntAmountForMiningBoostUpgrade(ctx context.Co
 		if errors.As(err, &rpcErr) && rpcErr != nil && (rpcErr.ErrorCode() == 429 || rpcErr.ErrorCode() >= 500) {
 			stdlibtime.Sleep(5 * stdlibtime.Second)
 
-			return r.getSenderAndBurntAmountForMiningBoostUpgrade(ctx, network, txHash)
+			return r.getSenderAndBurntAmountForMiningBoostUpgrade(ctx, network, paymentAddress, txHash)
 		}
 
 		return "", 0, errors.Wrapf(err, "failed to get TransactionReceipt for tx: %v", txHash)
@@ -340,7 +347,7 @@ func (r *repository) getSenderAndBurntAmountForMiningBoostUpgrade(ctx context.Co
 			return "", 0, errors.Wrapf(evErr, "failed to get UnpackIntoInterface[%#v]: %#v", &transferEvent, vLog)
 		}
 
-		if ethcommon.HexToAddress(vLog.Topics[2].Hex()) == r.cfg.MiningBoost.paymentAddress && transferEvent.Value.Cmp(new(big.Int).SetUint64(0)) > 0 {
+		if ethcommon.HexToAddress(vLog.Topics[2].Hex()) == ethcommon.HexToAddress(paymentAddress) && transferEvent.Value.Cmp(new(big.Int).SetUint64(0)) > 0 {
 			amount, _ := transferEvent.Value.Float64()
 			sender := vLog.Topics[1].Hex()
 			return sender, amount / iceFlakesDenomination, nil
@@ -359,7 +366,6 @@ func (r *repository) startICEPriceSyncer(ctx context.Context) {
 	r.cfg.MiningBoost.levels = new(atomic.Pointer[[]*MiningBoostLevel])
 	r.cfg.MiningBoost.networkEndpointCurrentLBIndex = make(map[BlockchainNetworkType]*atomic.Uint64, len(r.cfg.MiningBoost.NetworkEndpoints))
 	r.cfg.MiningBoost.networkClients = make(map[BlockchainNetworkType][]*ethclient.Client, len(r.cfg.MiningBoost.NetworkEndpoints))
-	r.cfg.MiningBoost.paymentAddress = ethcommon.HexToAddress(r.cfg.MiningBoost.PaymentAddress)
 	for network, endpoints := range r.cfg.MiningBoost.NetworkEndpoints {
 		clients := make([]*ethclient.Client, 0, len(endpoints))
 		for ix, endpoint := range endpoints {
