@@ -143,10 +143,10 @@ type (
 		UserID string `redis:"user_id,omitempty" json:"id"`
 	}
 	ProfilePictureNameField struct {
-		ProfilePictureName string `redis:"profile_picture_name,omitempty"`
+		ProfilePictureName string `redis:"profile_picture_name,omitempty" json:"profilePictureUrl"`
 	}
 	UsernameField struct {
-		Username string `redis:"username,omitempty"`
+		Username string `redis:"username,omitempty" json:"username"`
 	}
 	MiningBlockchainAccountAddressField struct {
 		MiningBlockchainAccountAddress string `redis:"mining_blockchain_account_address" json:"miningBlockchainAccountAddress"`
@@ -323,7 +323,7 @@ type (
 		UTCOffset int64 `redis:"utc_offset"`
 	}
 	HideRankingField struct {
-		HideRanking bool `redis:"hide_ranking"`
+		HideRanking bool `redis:"hide_ranking" json:"-"`
 	}
 	CreatedAtField struct {
 		CreatedAt *time.Time `json:"createdAt" redis:"created_at"`

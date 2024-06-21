@@ -217,7 +217,7 @@ func (s *usersTableSource) replaceUser(ctx context.Context, usr *users.User) err
 		val := model.TimeSlice(*usr.KYCStepsCreatedAt)
 		newPartialState.KYCStepsCreatedAt = &val
 	}
-	newPartialState.HideRanking = s.hideRanking(usr)
+	newPartialState.HideRanking = buildHideRanking(usr.HiddenProfileElements)
 	if newPartialState.ProfilePictureName != dbUser[0].ProfilePictureName ||
 		newPartialState.Username != dbUser[0].Username ||
 		!strings.EqualFold(newPartialState.Country, dbUser[0].Country) ||
@@ -234,23 +234,23 @@ func (s *usersTableSource) replaceUser(ctx context.Context, usr *users.User) err
 
 	return multierror.Append( //nolint:wrapcheck // Not Needed.
 		errors.Wrapf(err, "failed to replace user:%#v", usr),
-		errors.Wrapf(s.updateReferredBy(ctx, internalID, dbUser[0].IDT0, dbUser[0].IDTMinus1, usr.ID, usr.ReferredBy, dbUser[0].BalanceForTMinus1), "failed to updateReferredBy for user:%#v", usr),
+		errors.Wrapf(s.updateReferredBy(ctx, internalID, &dbUser[0].IDT0, &dbUser[0].IDTMinus1, usr.ID, usr.ReferredBy, dbUser[0].BalanceForTMinus1), "failed to updateReferredBy for user:%#v", usr),
 		errors.Wrapf(s.updateUsernameKeywords(ctx, internalID, dbUser[0].Username, usr.Username), "failed to updateUsernameKeywords for oldUser:%#v, user:%#v", dbUser, usr), //nolint:lll // .
 	).ErrorOrNil()
 }
 
-func (s *usersTableSource) updateReferredBy(ctx context.Context, id, oldIDT0, oldTMinus1 int64, userID, referredBy string, balanceForTMinus1 float64) error {
+func (r *repository) updateReferredBy(ctx context.Context, id int64, oldIDT0, oldTMinus1 *int64, userID, referredBy string, balanceForTMinus1 float64) error {
 	if referredBy == userID ||
 		referredBy == "" ||
-		referredBy == s.cfg.DefaultReferralName ||
+		referredBy == r.cfg.DefaultReferralName ||
 		referredBy == "bogus" ||
 		referredBy == "icenetwork" {
 		return nil
 	}
-	idT0, err := GetOrInitInternalID(ctx, s.db, referredBy)
+	idT0, err := GetOrInitInternalID(ctx, r.db, referredBy)
 	if err != nil {
 		return errors.Wrapf(err, "failed to getOrInitInternalID for referredBy:%v", referredBy)
-	} else if (oldIDT0 == idT0) || (oldIDT0*-1 == idT0) {
+	} else if (*oldIDT0 == idT0) || (*oldIDT0*-1 == idT0) {
 		return nil
 	}
 	type (
@@ -262,7 +262,7 @@ func (s *usersTableSource) updateReferredBy(ctx context.Context, id, oldIDT0, ol
 		}
 	)
 	newPartialState := &user{DeserializedUsersKey: model.DeserializedUsersKey{ID: id}}
-	if t0Referral, err2 := storage.Get[user](ctx, s.db, model.SerializedUsersKey(idT0)); err2 != nil {
+	if t0Referral, err2 := storage.Get[user](ctx, r.db, model.SerializedUsersKey(idT0)); err2 != nil {
 		return errors.Wrapf(err2, "failed to get users entry for idT0:%v", idT0)
 	} else if len(t0Referral) == 1 {
 		newPartialState.IDT0 = -t0Referral[0].ID
@@ -270,14 +270,14 @@ func (s *usersTableSource) updateReferredBy(ctx context.Context, id, oldIDT0, ol
 			if t0Referral[0].IDT0 < 0 {
 				t0Referral[0].IDT0 *= -1
 			}
-			if tMinus1Referral, err3 := storage.Get[user](ctx, s.db, model.SerializedUsersKey(t0Referral[0].IDT0)); err3 != nil {
+			if tMinus1Referral, err3 := storage.Get[user](ctx, r.db, model.SerializedUsersKey(t0Referral[0].IDT0)); err3 != nil {
 				return errors.Wrapf(err3, "failed to get users entry for tMinus1ID:%v", t0Referral[0].IDT0)
 			} else if len(tMinus1Referral) == 1 {
 				newPartialState.IDTMinus1 = -tMinus1Referral[0].ID
 				if balanceForTMinus1 > 0.0 {
-					results, err4 := s.db.TxPipelined(ctx, func(pipeliner redis.Pipeliner) error {
-						if oldTMinus1 < 0 {
-							oldTMinus1 *= -1
+					results, err4 := r.db.TxPipelined(ctx, func(pipeliner redis.Pipeliner) error {
+						if *oldTMinus1 < 0 {
+							*oldTMinus1 *= -1
 						}
 						if oldIdTMinus1Key := model.SerializedUsersKey(oldTMinus1); oldIdTMinus1Key != "" {
 							if err = pipeliner.HIncrByFloat(ctx, oldIdTMinus1Key, "balance_t2_pending", -balanceForTMinus1).Err(); err != nil {
@@ -305,28 +305,30 @@ func (s *usersTableSource) updateReferredBy(ctx context.Context, id, oldIDT0, ol
 							errs = append(errs, errors.Wrapf(err, "failed to run `%#v`", result.FullName()))
 						}
 					}
-					if errs := multierror.Append(nil, errs...); errs.ErrorOrNil() != nil {
-						return errors.Wrapf(errs.ErrorOrNil(), "failed to move t2 balances for id:%v,id:%v", userID, id)
+					if mErrs := multierror.Append(nil, errs...); mErrs.ErrorOrNil() != nil {
+						return errors.Wrapf(mErrs.ErrorOrNil(), "failed to move t2 balances for id:%v,id:%v", userID, id)
 					}
 				}
 			}
 		}
 	}
+	*oldIDT0 = newPartialState.IDT0
+	*oldTMinus1 = newPartialState.IDTMinus1
 
-	return errors.Wrapf(storage.Set(ctx, s.db, newPartialState), "failed to replace newPartialState:%#v", newPartialState)
+	return errors.Wrapf(storage.Set(ctx, r.db, newPartialState), "failed to replace newPartialState:%#v", newPartialState)
 }
 
-func (s *usersTableSource) updateUsernameKeywords(
+func (r *repository) updateUsernameKeywords(
 	ctx context.Context, id int64, oldUsername, newUsername string,
 ) error {
 	if oldUsername == newUsername {
 		return nil
 	}
-	toRemove, toAdd := s.usernameKeywords(oldUsername, newUsername)
+	toRemove, toAdd := r.usernameKeywords(oldUsername, newUsername)
 	if len(toRemove)+len(toAdd) == 0 {
 		return nil
 	}
-	results, err := s.db.TxPipelined(ctx, func(pipeliner redis.Pipeliner) error {
+	results, err := r.db.TxPipelined(ctx, func(pipeliner redis.Pipeliner) error {
 		for _, keyword := range toAdd {
 			if cmdErr := pipeliner.SAdd(ctx, "lookup:"+keyword, model.SerializedUsersKey(id)).Err(); cmdErr != nil {
 				return cmdErr
@@ -353,7 +355,7 @@ func (s *usersTableSource) updateUsernameKeywords(
 	return multierror.Append(nil, errs...).ErrorOrNil()
 }
 
-func (*usersTableSource) usernameKeywords(before, after string) (toRemove, toAdd []string) {
+func (*repository) usernameKeywords(before, after string) (toRemove, toAdd []string) {
 	beforeKeywords, afterKeywords := generateUsernameKeywords(before), generateUsernameKeywords(after)
 	for beforeKeyword := range beforeKeywords {
 		if _, found := afterKeywords[beforeKeyword]; !found {
@@ -384,9 +386,9 @@ func generateUsernameKeywords(username string) map[string]struct{} {
 	return keywords
 }
 
-func (*usersTableSource) hideRanking(usr *users.User) (hideRanking bool) {
-	if usr.HiddenProfileElements != nil {
-		for _, element := range *usr.HiddenProfileElements {
+func buildHideRanking(elems *users.Enum[users.HiddenProfileElement]) (hideRanking bool) {
+	if elems != nil {
+		for _, element := range *elems {
 			if users.GlobalRankHiddenProfileElement == element {
 				hideRanking = true
 

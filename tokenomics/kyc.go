@@ -12,6 +12,7 @@ import (
 	stdlibtime "time"
 
 	"github.com/goccy/go-json"
+	"github.com/hashicorp/go-multierror"
 	"github.com/imroc/req/v3"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
@@ -474,11 +475,17 @@ func (r *repository) overrideKYCStateWithEskimoKYCState(ctx context.Context, use
 		return false, errors.Wrapf(err2, "failed to read body of eskimo user state request for userID:%v, skipKYCSteps:%#v", userID, skipKYCSteps)
 	} else {
 		var usr struct {
+			HiddenProfileElements *users.Enum[users.HiddenProfileElement] `json:"hiddenProfileElements,omitempty" redis:"-"`
+			model.CreatedAtField
 			model.UserIDField
 			model.CountryField
+			model.ProfilePictureNameField
+			model.UsernameField
 			model.MiningBlockchainAccountAddressField
+			ReferredBy string `json:"referredBy,omitempty"  redis:"-"`
 			model.KYCState
 			model.DeserializedUsersKey
+			model.HideRankingField
 			KycFaceAvailable bool `json:"kycFaceAvailable" redis:"-"`
 		}
 		if err3 := json.Unmarshal(data, &usr); err3 != nil {
@@ -486,8 +493,13 @@ func (r *repository) overrideKYCStateWithEskimoKYCState(ctx context.Context, use
 		} else {
 			usr.DeserializedUsersKey = state.DeserializedUsersKey
 			state.KYCState = usr.KYCState
+			usr.HideRanking = buildHideRanking(usr.HiddenProfileElements)
 
-			return usr.KycFaceAvailable, errors.Wrapf(storage.Set(ctx, r.db, &usr), "failed to db set partial state:%#v, userID:%v, skipKYCSteps:%#v", &usr, userID, skipKYCSteps) //nolint:lll // .
+			return usr.KycFaceAvailable, multierror.Append(
+				errors.Wrapf(r.updateUsernameKeywords(ctx, state.ID, state.Username, usr.Username), "failed to updateUsernameKeywords for oldUser:%#v, user:%#v", state, usr),                         //nolint:lll // .
+				errors.Wrapf(r.updateReferredBy(ctx, state.ID, &state.IDT0, &state.IDTMinus1, state.UserID, usr.ReferredBy, state.BalanceForTMinus1), "failed to updateReferredBy for user:%#v", usr), //nolint:lll // .
+				errors.Wrapf(storage.Set(ctx, r.db, &usr), "failed to db set partial state:%#v, userID:%v, skipKYCSteps:%#v", &usr, userID, skipKYCSteps),
+			).ErrorOrNil()
 		}
 	}
 }

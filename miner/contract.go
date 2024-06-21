@@ -72,7 +72,6 @@ type (
 		model.PreStakingBonusField
 		model.PreStakingAllocationField
 		model.ExtraBonusField
-		model.UTCOffsetField
 		model.ActiveT1ReferralsField
 		model.ActiveT2ReferralsField
 	}

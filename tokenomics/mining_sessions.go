@@ -37,11 +37,13 @@ type (
 		StartOrExtendMiningSession
 		model.KYCState
 		model.LatestDeviceField
+		model.UsernameField
 		model.UserIDField
 		model.SlashingRateSoloField
 		model.SlashingRateT0Field
 		model.SlashingRateT1Field
 		model.SlashingRateT2Field
+		model.BalanceForTMinus1Field
 		model.BalanceSoloEthereumField
 		model.BalanceSoloField
 		model.UTCOffsetField

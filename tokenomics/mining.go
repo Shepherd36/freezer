@@ -190,7 +190,6 @@ func (r *repository) GetMiningSummary(ctx context.Context, userID string) (*Mini
 		model.ExtraBonusField
 		model.PreStakingAllocationField
 		model.IDT0Field
-		model.UTCOffsetField
 		model.ActiveT1ReferralsField
 		model.ActiveT2ReferralsField
 		model.ExtraBonusDaysClaimNotAvailableResettableField
