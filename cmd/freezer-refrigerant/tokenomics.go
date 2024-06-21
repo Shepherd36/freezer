@@ -133,9 +133,6 @@ func (s *service) StartNewMiningSession( //nolint:gocritic // False negative.
 	ctx context.Context,
 	req *server.Request[StartNewMiningSessionRequestBody, tokenomics.MiningSummary],
 ) (*server.Response[tokenomics.MiningSummary], *server.Response[server.ErrorResponse]) {
-	if true {
-		return nil, server.Forbidden(errors.New("functionality temporarily disabled"))
-	}
 	ms := &tokenomics.MiningSummary{MiningSession: &tokenomics.MiningSession{UserID: &req.Data.UserID}}
 	ctx = contextWithHashCode(ctx, req)
 	ctx = tokenomics.ContextWithClientType(ctx, req.Data.XClientType)
