@@ -496,6 +496,7 @@ func (r *repository) overrideKYCStateWithEskimoKYCState(ctx context.Context, use
 			state.KYCState = usr.KYCState
 			usr.HideRanking = buildHideRanking(usr.HiddenProfileElements)
 			usr.CreatedAt = time.New(usr.AccountCreatedAt)
+			usr.ProfilePictureName = r.pictureClient.StripDownloadURL(usr.ProfilePictureName)
 
 			return usr.KycFaceAvailable, multierror.Append(
 				errors.Wrapf(r.updateUsernameKeywords(ctx, state.ID, state.Username, usr.Username), "failed to updateUsernameKeywords for oldUser:%#v, user:%#v", state, usr),                         //nolint:lll // .
