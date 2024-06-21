@@ -476,6 +476,7 @@ func (r *repository) overrideKYCStateWithEskimoKYCState(ctx context.Context, use
 	} else {
 		var usr struct {
 			HiddenProfileElements *users.Enum[users.HiddenProfileElement] `json:"hiddenProfileElements,omitempty" redis:"-"`
+			AccountCreatedAt      stdlibtime.Time                         `json:"createdAt" redis:"-"`
 			model.CreatedAtField
 			model.UserIDField
 			model.CountryField
@@ -494,6 +495,7 @@ func (r *repository) overrideKYCStateWithEskimoKYCState(ctx context.Context, use
 			usr.DeserializedUsersKey = state.DeserializedUsersKey
 			state.KYCState = usr.KYCState
 			usr.HideRanking = buildHideRanking(usr.HiddenProfileElements)
+			usr.CreatedAt = time.New(usr.AccountCreatedAt)
 
 			return usr.KycFaceAvailable, multierror.Append(
 				errors.Wrapf(r.updateUsernameKeywords(ctx, state.ID, state.Username, usr.Username), "failed to updateUsernameKeywords for oldUser:%#v, user:%#v", state, usr),                         //nolint:lll // .
