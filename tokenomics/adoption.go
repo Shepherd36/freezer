@@ -40,11 +40,15 @@ func (r *repository) GetAdoptionSummary(ctx context.Context, userID string) (as 
 
 		return nil, errors.Wrapf(err, "failed to get GetAdoptionSummary for id:%v", id)
 	}
+	createdAt := res[0].CreatedAt
+	if createdAt.IsNil() {
+		createdAt = time.Now()
+	}
 	for mi := range r.cfg.Adoption.Milestones {
-		achievedAt := time.New(res[0].CreatedAt.Add(stdlibtime.Duration(mi) * r.cfg.Adoption.DurationBetweenMilestones))
+		achievedAt := time.New(createdAt.Add(stdlibtime.Duration(mi) * r.cfg.Adoption.DurationBetweenMilestones))
 		as.Milestones = append(as.Milestones, &Adoption[string]{
 			AchievedAt:     achievedAt,
-			BaseMiningRate: strconv.FormatFloat(BaseMiningRate(achievedAt, res[0].CreatedAt, r.cfg.Adoption.StartingBaseMiningRate, r.cfg.Adoption.Milestones, r.cfg.Adoption.DurationBetweenMilestones), 'f', 20, 64),
+			BaseMiningRate: strconv.FormatFloat(BaseMiningRate(achievedAt, createdAt, r.cfg.Adoption.StartingBaseMiningRate, r.cfg.Adoption.Milestones, r.cfg.Adoption.DurationBetweenMilestones), 'f', 20, 64),
 			Milestone:      uint64(mi + 1),
 		})
 	}
