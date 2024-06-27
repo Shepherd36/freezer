@@ -156,7 +156,7 @@ func (r *repository) checkNextKYCStep(ctx context.Context, state *getCurrentMini
 	case users.QuizKYCStep:
 		social2Required := (state.KYCStepAttempted(users.Social2KYCStep-1) && state.KYCStepNotAttempted(users.Social2KYCStep)) ||
 			state.DelayPassedSinceLastKYCStepAttempt(users.Social2KYCStep, r.cfg.KYC.Social2Delay)
-		minDelaySinceLastKYCStep := state.DelayPassedSinceLastKYCStepAttempt(users.Social2KYCStep-1, r.cfg.KYC.Social2Delay)
+		minDelaySinceLastKYCStep := state.DelayPassedSinceLastKYCStepAttempt(users.Social2KYCStep-1, r.cfg.MiningSessionDuration.Max)
 
 		if r.isKYCStepForced(users.Social2KYCStep, state.UserID) || (!state.MiningSessionSoloLastStartedAt.IsNil() && social2Required && minDelaySinceLastKYCStep && r.isKYCEnabled(ctx, state.LatestDevice, users.Social2KYCStep)) { //nolint:lll // .
 			return terror.New(ErrKYCRequired, map[string]any{
