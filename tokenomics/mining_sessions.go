@@ -71,10 +71,10 @@ func (r *repository) StartNewMiningSession( //nolint:funlen,gocognit // A lot of
 
 		return errors.Wrapf(err, "failed to get miningSummary for id:%v", id)
 	}
+	maxMiningSessionDuration := r.cfg.maxMiningSessionDuration(old[0].MiningBoostLevelIndexField)
 	if !old[0].MiningSessionSoloEndedAt.IsNil() &&
 		!old[0].MiningSessionSoloLastStartedAt.IsNil() &&
 		old[0].MiningSessionSoloEndedAt.After(*now.Time) {
-		maxMiningSessionDuration := r.cfg.maxMiningSessionDuration(old[0].MiningBoostLevelIndexField)
 		durationIncludingDayOffs := old[0].MiningSessionSoloEndedAt.Sub(*old[0].MiningSessionSoloLastStartedAt.Time)
 		if dayOffIsUsed := durationIncludingDayOffs > maxMiningSessionDuration && now.Sub(*old[0].MiningSessionSoloLastStartedAt.Time) > maxMiningSessionDuration; dayOffIsUsed {
 			maxMiningSessionDuration = r.cfg.MiningSessionDuration.Max
@@ -125,7 +125,7 @@ func (r *repository) StartNewMiningSession( //nolint:funlen,gocognit // A lot of
 		MiningStreak:                  r.calculateMiningStreak(now, startedAt, newMS.MiningSessionSoloEndedAt),
 		UserID:                        &userID,
 		ResettableStartingAt:          time.New(newMS.MiningSessionSoloLastStartedAt.Add(r.cfg.MiningSessionDuration.Min)),
-		WarnAboutExpirationStartingAt: time.New(newMS.MiningSessionSoloLastStartedAt.Add(r.cfg.maxMiningSessionDuration(old[0].MiningBoostLevelIndexField) - r.cfg.MiningSessionDuration.Max).Add(r.cfg.MiningSessionDuration.WarnAboutExpirationAfter)),
+		WarnAboutExpirationStartingAt: time.New(newMS.MiningSessionSoloLastStartedAt.Add(maxMiningSessionDuration - r.cfg.MiningSessionDuration.Max).Add(r.cfg.MiningSessionDuration.WarnAboutExpirationAfter)),
 	}
 	if err = r.sendMiningSessionMessage(ctx, sess); err != nil {
 		return errors.Wrapf(err, "failed to sendMiningSessionMessage:%#v", sess)
