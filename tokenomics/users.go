@@ -179,6 +179,7 @@ func (s *usersTableSource) replaceUser(ctx context.Context, usr *users.User) err
 			model.KYCStepPassedField
 			model.KYCStepBlockedField
 			model.HideRankingField
+			model.T1ReferralsSharingEnabledField
 		}
 		readOnlyUser struct {
 			LocalUser
@@ -218,12 +219,16 @@ func (s *usersTableSource) replaceUser(ctx context.Context, usr *users.User) err
 		newPartialState.KYCStepsCreatedAt = &val
 	}
 	newPartialState.HideRanking = buildHideRanking(usr.HiddenProfileElements)
+	if usr.T1ReferralsSharingEnabled != nil {
+		newPartialState.T1ReferralsSharingEnabled = *usr.T1ReferralsSharingEnabled
+	}
 	if newPartialState.ProfilePictureName != dbUser[0].ProfilePictureName ||
 		newPartialState.Username != dbUser[0].Username ||
 		!strings.EqualFold(newPartialState.Country, dbUser[0].Country) ||
 		newPartialState.MiningBlockchainAccountAddress != dbUser[0].MiningBlockchainAccountAddress ||
 		newPartialState.BlockchainAccountAddress != dbUser[0].BlockchainAccountAddress ||
 		newPartialState.HideRanking != dbUser[0].HideRanking ||
+		newPartialState.T1ReferralsSharingEnabled != dbUser[0].T1ReferralsSharingEnabled ||
 		(dbUser[0].CreatedAt.IsNil() || !newPartialState.CreatedAt.Equal(*dbUser[0].CreatedAt.Time)) ||
 		!newPartialState.KYCStepsCreatedAt.Equals(dbUser[0].KYCStepsCreatedAt) ||
 		!newPartialState.KYCStepsLastUpdatedAt.Equals(dbUser[0].KYCStepsLastUpdatedAt) ||

@@ -325,6 +325,9 @@ type (
 	HideRankingField struct {
 		HideRanking bool `redis:"hide_ranking" json:"-"`
 	}
+	T1ReferralsSharingEnabledField struct {
+		T1ReferralsSharingEnabled bool `json:"t1ReferralsSharingEnabled" redis:"t1_referrals_sharing_enabled"`
+	}
 	CreatedAtField struct {
 		CreatedAt *time.Time `json:"-" redis:"created_at"`
 	}

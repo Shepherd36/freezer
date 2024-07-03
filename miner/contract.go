@@ -74,6 +74,7 @@ type (
 		model.ExtraBonusField
 		model.ActiveT1ReferralsField
 		model.ActiveT2ReferralsField
+		model.T1ReferralsSharingEnabledField
 	}
 
 	UpdatedUser struct { // This is public only because we have to embed it, and it has to be if so.

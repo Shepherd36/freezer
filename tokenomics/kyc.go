@@ -494,6 +494,7 @@ func (r *repository) overrideKYCStateWithEskimoKYCState(ctx context.Context, use
 			model.KYCState
 			model.DeserializedUsersKey
 			model.HideRankingField
+			model.T1ReferralsSharingEnabledField
 			KycFaceAvailable bool `json:"kycFaceAvailable" redis:"-"`
 		}
 		if err3 := json.Unmarshal(data, &usr); err3 != nil {

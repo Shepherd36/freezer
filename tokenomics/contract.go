@@ -208,6 +208,7 @@ type (
 		UserID                        *string             `json:"userId,omitempty" swaggerignore:"true" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"`
 		Extension                     stdlibtime.Duration `json:"extension,omitempty" swaggerignore:"true" example:"24h"`
 		MiningStreak                  uint64              `json:"miningStreak,omitempty" swaggerignore:"true" example:"11"`
+		MiningBoostLevel              uint8               `json:"miningBoostLevel,omitempty" swaggerignore:"true" example:"1"`
 	}
 	ExtraBonusSummary struct {
 		UserID              string  `json:"userId,omitempty" swaggerignore:"true" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"`

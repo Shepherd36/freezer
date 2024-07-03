@@ -71,6 +71,10 @@ func (r *repository) StartNewMiningSession( //nolint:funlen,gocognit // A lot of
 
 		return errors.Wrapf(err, "failed to get miningSummary for id:%v", id)
 	}
+	var miningBoostLevel uint8
+	if old[0].MiningBoostLevelIndex != nil {
+		miningBoostLevel = uint8(*old[0].MiningBoostLevelIndex) + 1
+	}
 	maxMiningSessionDuration := r.cfg.maxMiningSessionDuration(old[0].MiningBoostLevelIndexField)
 	if !old[0].MiningSessionSoloEndedAt.IsNil() &&
 		!old[0].MiningSessionSoloLastStartedAt.IsNil() &&
@@ -126,6 +130,7 @@ func (r *repository) StartNewMiningSession( //nolint:funlen,gocognit // A lot of
 		UserID:                        &userID,
 		ResettableStartingAt:          time.New(newMS.MiningSessionSoloLastStartedAt.Add(r.cfg.MiningSessionDuration.Min)),
 		WarnAboutExpirationStartingAt: time.New(newMS.MiningSessionSoloLastStartedAt.Add(maxMiningSessionDuration - r.cfg.MiningSessionDuration.Max).Add(r.cfg.MiningSessionDuration.WarnAboutExpirationAfter)),
+		MiningBoostLevel:              miningBoostLevel,
 	}
 	if err = r.sendMiningSessionMessage(ctx, sess); err != nil {
 		return errors.Wrapf(err, "failed to sendMiningSessionMessage:%#v", sess)

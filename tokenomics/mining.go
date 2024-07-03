@@ -195,6 +195,7 @@ func (r *repository) GetMiningSummary(ctx context.Context, userID string) (*Mini
 		model.ExtraBonusDaysClaimNotAvailableResettableField
 		model.NewsSeenField
 		model.KYCStepBlockedField
+		model.T1ReferralsSharingEnabledField
 	}](ctx, r.db, model.SerializedUsersKey(id))
 	if err != nil || len(ms) == 0 {
 		if err == nil {
@@ -220,7 +221,11 @@ func (r *repository) GetMiningSummary(ctx context.Context, userID string) (*Mini
 	maxMiningSessionDuration := r.cfg.maxMiningSessionDuration(ms[0].MiningBoostLevelIndexField)
 	activeT1Referrals := int32(0)
 	if ms[0].MiningBoostLevelIndex != nil {
-		activeT1Referrals = int32(math.Min(float64((*r.cfg.MiningBoost.levels.Load())[int(*ms[0].MiningBoostLevelIndex)].MaxT1Referrals), float64(ms[0].ActiveT1Referrals)))
+		if ms[0].T1ReferralsSharingEnabled {
+			activeT1Referrals = int32((*r.cfg.MiningBoost.levels.Load())[int(*ms[0].MiningBoostLevelIndex)].MaxT1Referrals)
+		} else {
+			activeT1Referrals = int32(math.Min(float64((*r.cfg.MiningBoost.levels.Load())[int(*ms[0].MiningBoostLevelIndex)].MaxT1Referrals), float64(ms[0].ActiveT1Referrals)))
+		}
 	}
 
 	return &MiningSummary{
