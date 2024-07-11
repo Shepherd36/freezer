@@ -178,6 +178,9 @@ type (
 	BalanceT1PendingField struct {
 		BalanceT1Pending float64 `redis:"balance_t1_pending,omitempty"`
 	}
+	BalanceT1WelcomeBonusPendingField struct {
+		BalanceT1WelcomeBonusPending float64 `redis:"balance_t1_welcome_bonus_pending,omitempty"`
+	}
 	BalanceT2PendingField struct {
 		BalanceT2Pending float64 `redis:"balance_t2_pending,omitempty"`
 	}
@@ -186,6 +189,9 @@ type (
 	}
 	BalanceT1PendingAppliedField struct {
 		BalanceT1PendingApplied float64 `redis:"balance_t1_pending_applied,omitempty"`
+	}
+	BalanceT1WelcomeBonusPendingAppliedField struct {
+		BalanceT1WelcomeBonusPendingApplied float64 `redis:"balance_t1_welcome_bonus_pending_applied,omitempty"`
 	}
 	BalanceT2PendingAppliedField struct {
 		BalanceT2PendingApplied float64 `redis:"balance_t2_pending_applied,omitempty"`
@@ -325,8 +331,11 @@ type (
 	HideRankingField struct {
 		HideRanking bool `redis:"hide_ranking" json:"-"`
 	}
-	T1ReferralsSharingEnabledField struct {
-		T1ReferralsSharingEnabled bool `json:"t1ReferralsSharingEnabled" redis:"t1_referrals_sharing_enabled"`
+	WelcomeBonusV2AppliedField struct {
+		WelcomeBonusV2Applied *FlexibleBool `redis:"welcome_bonus_v2_applied,omitempty"`
+	}
+	VerifiedT1ReferralsField struct {
+		VerifiedT1Referrals uint64 `json:"verifiedT1ReferralCount,omitempty" redis:"verified_t1_referrals"`
 	}
 	CreatedAtField struct {
 		CreatedAt *time.Time `json:"-" redis:"created_at"`
@@ -519,6 +528,15 @@ func CalculateMiningStreak(now, start, end *time.Time, miningSessionDuration std
 	}
 
 	return uint64(now.Sub(*start.Time) / miningSessionDuration)
+}
+
+func (kyc *KYCState) IsVerified() bool {
+	return kyc != nil && kyc.KYCStepPassed >= users.LivenessDetectionKYCStep &&
+		kyc.KYCStepsLastUpdatedAt != nil && kyc.KYCStepsCreatedAt != nil &&
+		len(*kyc.KYCStepsCreatedAt) >= int(users.LivenessDetectionKYCStep) &&
+		len(*kyc.KYCStepsLastUpdatedAt) >= int(users.LivenessDetectionKYCStep) &&
+		!(*kyc.KYCStepsCreatedAt)[users.LivenessDetectionKYCStep-1].IsNil() &&
+		!(*kyc.KYCStepsLastUpdatedAt)[users.LivenessDetectionKYCStep-1].IsNil()
 }
 
 func (kyc *KYCState) KYCStepPassedCorrectly(kycStep users.KYCStep) bool {

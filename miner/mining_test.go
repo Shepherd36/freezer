@@ -28,6 +28,8 @@ func newUser() *user {
 	u.CreatedAt = testTime
 	u.MiningSessionSoloStartedAt = timeDelta(-stdlibtime.Hour)
 	u.MiningSessionSoloEndedAt = timeDelta(23 * stdlibtime.Hour)
+	trueVal := model.FlexibleBool(true)
+	u.WelcomeBonusV2Applied = &trueVal
 
 	return u
 }

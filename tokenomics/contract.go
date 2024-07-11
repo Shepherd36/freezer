@@ -30,6 +30,10 @@ const (
 )
 
 const (
+	WelcomeBonusV2Amount = 500.0
+)
+
+const (
 	PositiveMiningRateType MiningRateType = "positive"
 	NegativeMiningRateType MiningRateType = "negative"
 	NoneMiningRateType     MiningRateType = "none"

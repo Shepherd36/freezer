@@ -5,6 +5,7 @@ package miner
 import (
 	"math"
 
+	"github.com/ice-blockchain/freezer/model"
 	"github.com/ice-blockchain/freezer/tokenomics"
 	"github.com/ice-blockchain/wintr/time"
 )
@@ -143,7 +144,7 @@ func mine(now *time.Time, usr *user, t0Ref, tMinus1Ref *referral) (updatedUser *
 		}
 		activeT1Referrals := int32(0)
 		if updatedUser.MiningBoostLevelIndex != nil {
-			if updatedUser.T1ReferralsSharingEnabled {
+			if updatedUser.IsVerified() && updatedUser.VerifiedT1Referrals >= 25 {
 				activeT1Referrals = int32((*cfg.miningBoostLevels.Load())[int(*updatedUser.MiningBoostLevelIndex)].MaxT1Referrals)
 			} else {
 				activeT1Referrals = int32(math.Min(float64((*cfg.miningBoostLevels.Load())[int(*updatedUser.MiningBoostLevelIndex)].MaxT1Referrals), float64(updatedUser.ActiveT1Referrals)))
@@ -181,6 +182,19 @@ func mine(now *time.Time, usr *user, t0Ref, tMinus1Ref *referral) (updatedUser *
 		if updatedUser.SlashingRateForTMinus1 == 0 && !tMinus1Ref.MiningSessionSoloEndedAt.IsNil() && tMinus1Ref.MiningSessionSoloEndedAt.Before(*now.Time) && !tMinus1Ref.slashingDisabled() && !tMinus1Ref.reachedSlashingFloor() {
 			updatedUser.SlashingRateForTMinus1 = updatedUser.BalanceForTMinus1 / float64(cfg.SlashingDaysCount) / miningSessionRatio
 		}
+	}
+
+	if updatedUser.BalanceT1WelcomeBonusPendingApplied < 25*tokenomics.WelcomeBonusV2Amount {
+		if unAppliedT1WelcomeBonusPending := updatedUser.BalanceT1WelcomeBonusPending - updatedUser.BalanceT1WelcomeBonusPendingApplied; unAppliedT1WelcomeBonusPending == 0 {
+			updatedUser.BalanceT1WelcomeBonusPending = 0
+			updatedUser.BalanceT1WelcomeBonusPendingApplied = 0
+		} else {
+			unAppliedT1Pending += min(unAppliedT1WelcomeBonusPending, 25*tokenomics.WelcomeBonusV2Amount-updatedUser.BalanceT1WelcomeBonusPendingApplied)
+			updatedUser.BalanceT1WelcomeBonusPendingApplied = min(updatedUser.BalanceT1WelcomeBonusPending, 25*tokenomics.WelcomeBonusV2Amount)
+		}
+	} else {
+		updatedUser.BalanceT1WelcomeBonusPending = 0
+		updatedUser.BalanceT1WelcomeBonusPendingApplied = 0
 	}
 
 	slashedAmount := (updatedUser.SlashingRateSolo + updatedUser.SlashingRateT0) * elapsedTimeFraction
@@ -237,6 +251,13 @@ func mine(now *time.Time, usr *user, t0Ref, tMinus1Ref *referral) (updatedUser *
 
 	if usr.BalanceTotalPreStaking+usr.BalanceTotalStandard == 0 {
 		slashedAmount = 0
+	}
+	if usr.WelcomeBonusV2Applied == nil || !*usr.WelcomeBonusV2Applied {
+		updatedUser.BalanceSolo += tokenomics.WelcomeBonusV2Amount - 10
+		trueVal := model.FlexibleBool(true)
+		usr.WelcomeBonusV2Applied = &trueVal
+	} else {
+		usr.WelcomeBonusV2Applied = nil
 	}
 
 	totalAmount := updatedUser.BalanceSolo + updatedUser.BalanceT0 + updatedUser.BalanceT1 + updatedUser.BalanceT2

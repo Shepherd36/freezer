@@ -67,14 +67,15 @@ type (
 		model.LatestDeviceField
 		UpdatedUser
 		model.BalanceSoloPendingField
+		model.BalanceT1WelcomeBonusPendingField
 		model.BalanceT1PendingField
 		model.BalanceT2PendingField
 		model.PreStakingBonusField
 		model.PreStakingAllocationField
 		model.ExtraBonusField
+		model.VerifiedT1ReferralsField
 		model.ActiveT1ReferralsField
 		model.ActiveT2ReferralsField
-		model.T1ReferralsSharingEnabledField
 	}
 
 	UpdatedUser struct { // This is public only because we have to embed it, and it has to be if so.
@@ -92,6 +93,7 @@ type (
 		model.BalanceT2EthereumPendingField
 		model.KYCQuizDisabledResettableField
 		model.KYCQuizCompletedResettableField
+		model.WelcomeBonusV2AppliedField
 		model.UserIDField
 		model.DeserializedUsersKey
 		model.IDT0Field
@@ -101,6 +103,7 @@ type (
 		model.BalanceTotalMintedField
 		model.BalanceTotalSlashedField
 		model.BalanceSoloPendingAppliedField
+		model.BalanceT1WelcomeBonusPendingAppliedField
 		model.BalanceT1PendingAppliedField
 		model.BalanceT2PendingAppliedField
 		model.BalanceSoloField

@@ -4,6 +4,7 @@ package tokenomics
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	stdlibtime "time"
@@ -170,11 +171,11 @@ func (s *usersTableSource) replaceUser(ctx context.Context, usr *users.User) err
 			model.CountryField
 			model.MiningBlockchainAccountAddressField
 			model.BlockchainAccountAddressField
+			model.VerifiedT1ReferralsField
 			model.DeserializedUsersKey
 			model.KYCStepPassedField
 			model.KYCStepBlockedField
 			model.HideRankingField
-			model.T1ReferralsSharingEnabledField
 		}
 		readOnlyUser struct {
 			LocalUser
@@ -214,16 +215,14 @@ func (s *usersTableSource) replaceUser(ctx context.Context, usr *users.User) err
 		newPartialState.KYCStepsCreatedAt = &val
 	}
 	newPartialState.HideRanking = buildHideRanking(usr.HiddenProfileElements)
-	if usr.T1ReferralsSharingEnabled != nil {
-		newPartialState.T1ReferralsSharingEnabled = *usr.T1ReferralsSharingEnabled
-	}
+	newPartialState.VerifiedT1Referrals = usr.VerifiedT1ReferralCount
 	if newPartialState.ProfilePictureName != dbUser[0].ProfilePictureName ||
 		newPartialState.Username != dbUser[0].Username ||
 		!strings.EqualFold(newPartialState.Country, dbUser[0].Country) ||
 		newPartialState.MiningBlockchainAccountAddress != dbUser[0].MiningBlockchainAccountAddress ||
 		newPartialState.BlockchainAccountAddress != dbUser[0].BlockchainAccountAddress ||
 		newPartialState.HideRanking != dbUser[0].HideRanking ||
-		newPartialState.T1ReferralsSharingEnabled != dbUser[0].T1ReferralsSharingEnabled ||
+		newPartialState.VerifiedT1Referrals != dbUser[0].VerifiedT1Referrals ||
 		(dbUser[0].CreatedAt.IsNil() || !newPartialState.CreatedAt.Equal(*dbUser[0].CreatedAt.Time)) ||
 		!newPartialState.KYCStepsCreatedAt.Equals(dbUser[0].KYCStepsCreatedAt) ||
 		!newPartialState.KYCStepsLastUpdatedAt.Equals(dbUser[0].KYCStepsLastUpdatedAt) ||
@@ -311,6 +310,35 @@ func (r *repository) updateReferredBy(ctx context.Context, id int64, oldIDT0, ol
 				}
 			}
 		}
+	}
+	if localIDT0 := newPartialState.IDT0; localIDT0 != 0 {
+		if localIDT0 < 0 {
+			localIDT0 *= -1
+		}
+		results, err4 := r.db.TxPipelined(ctx, func(pipeliner redis.Pipeliner) error {
+			if innerErr := pipeliner.HIncrBy(ctx, model.SerializedUsersKey(localIDT0), "balance_t1_welcome_bonus_pending", WelcomeBonusV2Amount).Err(); innerErr != nil {
+				return innerErr
+			}
+
+			return pipeliner.HSet(ctx, newPartialState.Key(), storage.SerializeValue(newPartialState)...).Err()
+		})
+		if err4 != nil {
+			return errors.Wrapf(err4, "failed to run TxPipelined for userID:%v", userID)
+		}
+		errs := make([]error, 0, len(results))
+		for _, result := range results {
+			if innerErr := result.Err(); innerErr != nil {
+				errs = append(errs, errors.Wrapf(innerErr, "failed to run `%#v`", result.FullName()))
+			}
+		}
+		if mErrs := multierror.Append(nil, errs...); mErrs.ErrorOrNil() != nil {
+			return errors.Wrapf(mErrs.ErrorOrNil(), "failed to run TxPipelined for id:%v,id:%v", userID, id)
+		}
+
+		*oldIDT0 = newPartialState.IDT0
+		*oldTMinus1 = newPartialState.IDTMinus1
+
+		return nil
 	}
 	*oldIDT0 = newPartialState.IDT0
 	*oldTMinus1 = newPartialState.IDTMinus1
@@ -413,16 +441,17 @@ elseif set_nx_reply == 0 then
 end
 return new_id
 `)
-	initUserScript = redis.NewScript(`
+	initUserScript = redis.NewScript(fmt.Sprintf(`
 local hlen_reply = redis.call('HLEN', KEYS[1])
 if hlen_reply ~= 0 then
 	return redis.error_reply('[2]race condition')
 end
-redis.call('HSETNX', KEYS[1], 'balance_total_standard', 10.0)
-redis.call('HSETNX', KEYS[1], 'balance_total_minted', 10.0)
-redis.call('HSETNX', KEYS[1], 'balance_solo', 10.0)
+redis.call('HSETNX', KEYS[1], 'balance_total_standard', %[1]v)
+redis.call('HSETNX', KEYS[1], 'balance_total_minted', %[1]v)
+redis.call('HSETNX', KEYS[1], 'balance_solo', %[1]v)
+redis.call('HSETNX', KEYS[1], 'welcome_bonus_v2_applied', true)
 redis.call('HSETNX', KEYS[1], 'user_id', ARGV[1])
-`)
+`, strconv.FormatFloat(WelcomeBonusV2Amount, 'f', 1, 64)))
 )
 
 func GetOrInitInternalID(ctx context.Context, db storage.DB, userID string) (int64, error) {
