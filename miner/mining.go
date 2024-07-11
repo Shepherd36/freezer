@@ -252,12 +252,12 @@ func mine(now *time.Time, usr *user, t0Ref, tMinus1Ref *referral) (updatedUser *
 	if usr.BalanceTotalPreStaking+usr.BalanceTotalStandard == 0 {
 		slashedAmount = 0
 	}
-	if usr.WelcomeBonusV2Applied == nil || !*usr.WelcomeBonusV2Applied {
+	if updatedUser.WelcomeBonusV2Applied == nil || !*updatedUser.WelcomeBonusV2Applied {
 		updatedUser.BalanceSolo += tokenomics.WelcomeBonusV2Amount - 10
 		trueVal := model.FlexibleBool(true)
-		usr.WelcomeBonusV2Applied = &trueVal
+		updatedUser.WelcomeBonusV2Applied = &trueVal
 	} else {
-		usr.WelcomeBonusV2Applied = nil
+		updatedUser.WelcomeBonusV2Applied = nil
 	}
 
 	totalAmount := updatedUser.BalanceSolo + updatedUser.BalanceT0 + updatedUser.BalanceT1 + updatedUser.BalanceT2
